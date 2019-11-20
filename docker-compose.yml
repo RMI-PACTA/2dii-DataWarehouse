@@ -1,6 +1,21 @@
 ---
 version: "3.7"
 services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: ["bash"]
+    depends_on:
+      - db
+    environment:
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD:-postgres}"
+    stdin_open: true
+    tty: true
+    volumes:
+      - "${PWD}/app/:/usr/src/app/"
+      - "${PWD}/sql:/usr/src/app/sql"
+
   db:
     environment:
       POSTGRES_PASSWORD: "${POSTGRES_PASSWORD:-postgres}"
@@ -22,5 +37,4 @@ services:
     ports:
       - "${PGADMIN_PORT:-8080}:80"
     volumes:
-      # - "./test/pgadmin4/servers.json:/pgadmin4/servers.json"
       - "${PWD}/test/pgadmin4/servers.json:/pgadmin4/servers.json"
