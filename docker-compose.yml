@@ -24,6 +24,8 @@ services:
     image: "postgres:11.5-alpine"
     ports:
       - "${POSTGRES_EXPOSE_PORT:-5432}:5432"
+    volumes:
+      - "pgdata:/var/lib/postgresql/data"
 
   pgadmin:
     depends_on:
@@ -38,3 +40,6 @@ services:
       - "${PGADMIN_PORT:-8080}:80"
     volumes:
       - "${PWD}/test/pgadmin4/servers.json:/pgadmin4/servers.json"
+
+volumes:
+  pgdata:

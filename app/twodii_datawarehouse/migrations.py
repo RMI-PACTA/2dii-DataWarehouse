@@ -4,36 +4,49 @@ This module houses python code for running SQL migrations in the data
 warehouse, including bootstrapping an empty database.
 """
 
-import psycopg2.extras
+import pathlib
 
 METADATA_SCHEMA = 'public'
 # MIGRATION_HISTORY_TABLE = 'foo'
-MIGRATION_HISTORY_TABLE = 'migration_history'
+MIGRATION_HISTORY_TABLE = 'dw_version'
 
 
 def run_migrations(
     db_connection,
-    migrations_path='./sql'
+    migrations_path=pathlib.Path('sql')
 ):
     """Bootstrap and Update database structure.
+
+    Returns a tuple of the latest version run
 
     When run, it will determine the current data warehouse version, and run any
     additional migrations, if needed. If the data warehouse has not been
     initialized, it will bootstrap the data warehouse with initialization
     scripts.
     """
-    dw_version = get_dw_version(db_connection)
-    dw_current_version = 0
-    if dw_version is None:
+    dw_current_version = _get_dw_version(db_connection)
+    if dw_current_version is None:
         print("No Data warehouse found. Bootstrapping.")
-        with db_connection.cursor() as cursor:
-            cursor.execute(open("./sql/000_001_000.sql", "r").read())
+        dw_current_version = (0, 0, 0)
     else:
-        print(f"""Data Warehouse at version {dw_version}.
-        Updating to {dw_current_version}""")
+        print(f"Data Warehouse at version {dw_current_version}.")
+
+    migration_files = list(migrations_path.glob("**/*.sql"))
+    migrations_to_run = []
+    for x in migration_files:
+        if _parse_filename_version_number(x) > dw_current_version:
+            migrations_to_run.append(x)
+    migrations_to_run.sort(key=_parse_filename_version_number)
+    for x in migrations_to_run:
+        latest_migration = _parse_filename_version_number(x)
+        print(f"Running migration for version: {latest_migration}")
+        with db_connection.cursor() as cursor:
+            cursor.execute(x.open().read())
+        dw_current_version = _get_dw_version(db_connection)
+    return dw_current_version
 
 
-def get_dw_version(db_connection):
+def _get_dw_version(db_connection):
     """Determine which migrations have already been run against DB.
 
     returns a dict-like object (from a psycopg2 dict-like cursor)
@@ -53,7 +66,7 @@ def get_dw_version(db_connection):
     LIMIT 1;
     """
 
-    cur = db_connection.cursor(cursor_factory=psycopg2.extras.DictCursor)
+    cur = db_connection.cursor()
     cur.execute(
         existence_check_query,
         {'schema': METADATA_SCHEMA, 'table': MIGRATION_HISTORY_TABLE}
@@ -88,9 +101,7 @@ def get_dw_version(db_connection):
     return max_version
 
 
-# def run_migrations(
-#     db_connection,
-#     migrations_path="./sql"
-# ):
-#     "Run all migrations that haven't already been run against the database"
-#     pass
+def _parse_filename_version_number(filepath):
+    filename = filepath.stem
+    versions = filename.split('_')
+    return tuple(map(int, versions))

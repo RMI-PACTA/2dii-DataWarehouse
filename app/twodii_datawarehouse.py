@@ -9,7 +9,6 @@ the data warehouse database, and import any data files which need imported
 # External imports
 import psycopg2
 
-
 # Project imports
 import twodii_datawarehouse.migrations as migrations
 
@@ -18,6 +17,7 @@ def main():
     """Run database migrations and import data."""
     # This will generate the db connection (from envvars), find current
     # version, run new migrations, and load any data
+
     print("Establishing db connection")
     db_connection = psycopg2.connect(
         dbname='twodii',
