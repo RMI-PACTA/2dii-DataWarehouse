@@ -4,6 +4,7 @@ This module houses python code for running SQL migrations in the data
 warehouse, including bootstrapping an empty database.
 """
 
+import hashlib
 import pathlib
 import re
 
@@ -25,6 +26,8 @@ def run_migrations(
     initialized, it will bootstrap the data warehouse with initialization
     scripts.
     """
+    hasher = hashlib.md5
+
     dw_current_version = _get_dw_version(db_connection)
     if dw_current_version is None:
         print("No Data warehouse found. Bootstrapping.")
@@ -41,18 +44,36 @@ def run_migrations(
     migrations_to_run.sort(key=_parse_filename_version_number)
 
     # check that migration version numbers are unique
-    versions_to_run = []
+    versions_check = []
     for x in migrations_to_run:
-        if _parse_filename_version_number(x) in versions_to_run:
+        if _parse_filename_version_number(x) in versions_check:
             raise Exception(f'Duplicate migration version: {x}')
         else:
-            versions_to_run.append(_parse_filename_version_number(x))
+            versions_check.append(_parse_filename_version_number(x))
+
+    update_migration_history_query = f"""INSERT INTO
+    {METADATA_SCHEMA}.{MIGRATION_HISTORY_TABLE}
+    (major, minor, patch, filename, filehash, migration_time) VALUES
+    (%(major)s, %(minor)s, %(patch)s, %(filename)s, %(filehash)s, now())
+    """
 
     for x in migrations_to_run:
         latest_migration = _parse_filename_version_number(x)
         print(f"Running migration for version: {latest_migration}")
+        with x.open('rb') as file:
+            file_query = file.read()
         with db_connection.cursor() as cursor:
-            cursor.execute(x.open().read())
+            cursor.execute(file_query)
+            cursor.execute(
+                update_migration_history_query, {
+                    'major': latest_migration[0],
+                    'minor': latest_migration[1],
+                    'patch': latest_migration[2],
+                    'filename': x.name,
+                    'filehash': hasher(file_query).hexdigest()
+                }
+            )
+            db_connection.commit()
         dw_current_version = _get_dw_version(db_connection)
     return dw_current_version
 

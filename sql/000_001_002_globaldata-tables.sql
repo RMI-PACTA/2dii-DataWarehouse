@@ -1,13 +1,5 @@
 BEGIN TRANSACTION;
 
-  INSERT INTO PUBLIC.dw_version(major, minor, patch, notes)
-  VALUES (
-    0, --Major
-    1, --Minor
-    2, --Patch
-    'Create GlobalData tables'
-  );
-
   --Hydro Power Plants
   CREATE TABLE rawdata.globaldata_power_plants (
     id serial PRIMARY KEY,
