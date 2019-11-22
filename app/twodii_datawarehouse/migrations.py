@@ -5,6 +5,7 @@ warehouse, including bootstrapping an empty database.
 """
 
 import pathlib
+import re
 
 METADATA_SCHEMA = 'public'
 # MIGRATION_HISTORY_TABLE = 'foo'
@@ -34,9 +35,19 @@ def run_migrations(
     migration_files = list(migrations_path.glob("**/*.sql"))
     migrations_to_run = []
     for x in migration_files:
-        if _parse_filename_version_number(x) > dw_current_version:
+        x_version = _parse_filename_version_number(x)
+        if x_version is not None and x_version > dw_current_version:
             migrations_to_run.append(x)
     migrations_to_run.sort(key=_parse_filename_version_number)
+
+    # check that migration version numbers are unique
+    versions_to_run = []
+    for x in migrations_to_run:
+        if _parse_filename_version_number(x) in versions_to_run:
+            raise Exception(f'Duplicate migration version: {x}')
+        else:
+            versions_to_run.append(_parse_filename_version_number(x))
+
     for x in migrations_to_run:
         latest_migration = _parse_filename_version_number(x)
         print(f"Running migration for version: {latest_migration}")
@@ -103,5 +114,8 @@ def _get_dw_version(db_connection):
 
 def _parse_filename_version_number(filepath):
     filename = filepath.stem
-    versions = filename.split('_')
+    version_string = re.search(r"\d+_\d+_\d+", filename)
+    if version_string is None:
+        return None
+    versions = version_string.group(0).split('_')
     return tuple(map(int, versions))
