@@ -1,5 +1,3 @@
-BEGIN TRANSACTION;
-
   --Hydro Power Plants
   CREATE TABLE rawdata.globaldata_power_plants (
     id serial PRIMARY KEY,
@@ -92,5 +90,3 @@ BEGIN TRANSACTION;
     global_reference_id INT,
     disclaimer TEXT
   );
-
-COMMIT TRANSACTION;

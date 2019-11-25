@@ -15,7 +15,7 @@ MIGRATION_HISTORY_TABLE = 'dw_version'
 
 def run_migrations(
     db_connection,
-    migrations_path=pathlib.Path('sql')
+    migrations_path=pathlib.Path('/tmp', 'sql')
 ):
     """Bootstrap and Update database structure.
 

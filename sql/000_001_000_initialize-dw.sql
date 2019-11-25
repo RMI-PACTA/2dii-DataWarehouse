@@ -1,5 +1,3 @@
-BEGIN TRANSACTION;
-
   CREATE TABLE public.dw_version (
     major INT NOT NULL,
     minor INT NOT NULL,
@@ -11,5 +9,3 @@ BEGIN TRANSACTION;
     CONSTRAINT dw_version_unique UNIQUE (major, minor, patch),
     CONSTRAINT dw_version_positive CHECK (major >= 0 AND minor >= 0 AND patch >= 0)
   );
-
-COMMIT TRANSACTION;

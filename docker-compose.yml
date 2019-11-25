@@ -13,8 +13,9 @@ services:
     stdin_open: true
     tty: true
     volumes:
+      - "${PWD}/test/data_files/:/tmp/data_files"
       - "${PWD}/app/:/usr/src/app/"
-      - "${PWD}/sql:/usr/src/app/sql"
+      - "${PWD}/sql:/tmp/sql"
 
   db:
     environment:

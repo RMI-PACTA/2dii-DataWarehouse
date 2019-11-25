@@ -1,5 +1,3 @@
-BEGIN TRANSACTION;
-
   CREATE SCHEMA IF NOT EXISTS rawdata;
 
   CREATE TABLE rawdata.import_history (
@@ -9,5 +7,3 @@ BEGIN TRANSACTION;
     filename text NULL,
     file_md5 VARCHAR(32) NULL
   );
-
-COMMIT TRANSACTION;
