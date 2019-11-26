@@ -7,7 +7,7 @@ the data warehouse database, and import any data files which need imported
 
 
 # External imports
-import psycopg2
+import sqlalchemy as sqla
 
 # Project imports
 import twodii_datawarehouse.migrations as migrations
@@ -19,17 +19,18 @@ def main():
     # version, run new migrations, and load any data
 
     print("Establishing db connection")
-    db_connection = psycopg2.connect(
-        dbname='twodii',
-        user='postgres',
+    connection_string = sqla.engine.url.URL(
+        drivername='postgres',
+        database='twodii',
+        username='postgres',
         password='postgres',
-        host='db'
+        host='db',
+        port='5432'
     )
+    db_engine = sqla.create_engine(connection_string)
 
     print("Section 1: Migrations")
-    migrations.run_migrations(db_connection)
-
-    db_connection.close()
+    migrations.run_migrations(db_engine)
 
 
 if __name__ == '__main__':

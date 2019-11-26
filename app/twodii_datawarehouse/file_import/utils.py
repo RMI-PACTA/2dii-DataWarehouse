@@ -89,7 +89,7 @@ def clean_df_footer(df, **kwargs):
 
 
 def check_table_exists_in_db(
-    db_connection,
+    db_engine,
     tablename,
     schemaname='rawdata',
     raise_exception=True
@@ -108,7 +108,7 @@ def check_table_exists_in_db(
     """
     table_info = pd.read_sql(
         sql=query,
-        con=db_connection,
+        con=db_engine,
         params={'tablename': tablename, 'schemaname': schemaname}
     )
     if raise_exception & (len(table_info) == 0):
@@ -117,14 +117,14 @@ def check_table_exists_in_db(
 
 
 def get_db_column_info(
-    db_connection,
+    db_engine,
     tablename,
     schemaname='rawdata'
 ):
     """Find the column names and types for a table."""
     # Before starting, check that the table exists
     check_table_exists_in_db(
-        db_connection=db_connection,
+        db_engine=db_engine,
         tablename=tablename,
         schemaname=schemaname,
         raise_exception=True
@@ -153,7 +153,7 @@ def get_db_column_info(
     """
     col_info = pd.read_sql(
         sql=query,
-        con=db_connection,
+        con=db_engine,
         params={'tablename': tablename, 'schemaname': schemaname}
     )
     if len(col_info) == 0:
@@ -163,13 +163,13 @@ def get_db_column_info(
 
 def write_df_to_db(
     df,
-    db_connection,
+    db_engine,
     tablename,
     schemaname='rawdata'
 ):
     """Write the contents of a dataframe to the database."""
     target_column_info = get_db_column_info(
-        db_connection=db_connection,
+        db_engine=db_engine,
         tablename=tablename,
         schemaname=schemaname
     )
@@ -185,7 +185,7 @@ def write_df_to_db(
 
     # Actually write the table to the database
     df.to_sql(
-        con=db_connection,
+        con=db_engine,
         name=tablename,
         schema=schemaname,
         if_exists='append',
@@ -197,7 +197,7 @@ def write_df_to_db(
 
 importlib.reload(utils)
 importlib.reload(gd)
-df = gd.parse_globaldata_power_plants(fxx, power_plant_table_columns)
-utils.write_df_to_db(df, db_connection, 'globaldata_power_plants')
+df = gd.parse_globaldata_power_plants(filename, power_plant_table_columns)
+utils.write_df_to_db(df, db_engine, 'globaldata_power_plants')
 
 """

@@ -7,14 +7,14 @@ warehouse, including bootstrapping an empty database.
 import hashlib
 import pathlib
 import re
+import pandas as pd
 
 METADATA_SCHEMA = 'public'
-# MIGRATION_HISTORY_TABLE = 'foo'
 MIGRATION_HISTORY_TABLE = 'dw_version'
 
 
 def run_migrations(
-    db_connection,
+    db_engine,
     migrations_path=pathlib.Path('/tmp', 'sql')
 ):
     """Bootstrap and Update database structure.
@@ -28,7 +28,7 @@ def run_migrations(
     """
     hasher = hashlib.md5
 
-    dw_current_version = _get_dw_version(db_connection)
+    dw_current_version = _get_dw_version(db_engine)
     if dw_current_version is None:
         print("No Data warehouse found. Bootstrapping.")
         dw_current_version = (0, 0, 0)
@@ -62,9 +62,10 @@ def run_migrations(
         print(f"Running migration for version: {latest_migration}")
         with x.open('rb') as file:
             file_query = file.read()
-        with db_connection.cursor() as cursor:
-            cursor.execute(file_query)
-            cursor.execute(
+        with db_engine.connect() as connection:
+            transaction = connection.begin()
+            connection.execute(file_query.decode('utf-8'))
+            connection.execute(
                 update_migration_history_query, {
                     'major': latest_migration[0],
                     'minor': latest_migration[1],
@@ -73,12 +74,12 @@ def run_migrations(
                     'filehash': hasher(file_query).hexdigest()
                 }
             )
-            db_connection.commit()
-        dw_current_version = _get_dw_version(db_connection)
+            transaction.commit()
+        dw_current_version = _get_dw_version(db_engine)
     return dw_current_version
 
 
-def _get_dw_version(db_connection):
+def _get_dw_version(db_engine):
     """Determine which migrations have already been run against DB.
 
     returns a dict-like object (from a psycopg2 dict-like cursor)
@@ -98,15 +99,13 @@ def _get_dw_version(db_connection):
     LIMIT 1;
     """
 
-    cur = db_connection.cursor()
-    cur.execute(
-        existence_check_query,
-        {'schema': METADATA_SCHEMA, 'table': MIGRATION_HISTORY_TABLE}
+    table_exists = pd.read_sql(
+        con=db_engine,
+        sql=existence_check_query,
+        params={'schema': METADATA_SCHEMA, 'table': MIGRATION_HISTORY_TABLE}
     )
-    table_exists = cur.fetchone()
-    db_connection.rollback()
 
-    if table_exists is None:
+    if len(table_exists) == 0:
         return None
 
     # Passing the name of a table is the only time we want to use string
@@ -125,11 +124,18 @@ def _get_dw_version(db_connection):
     LIMIT 1;
     """
 
-    cur.execute(max_version_query)
-    max_version = cur.fetchone()
-    db_connection.rollback()
+    max_version_df = pd.read_sql(
+        con=db_engine,
+        sql=max_version_query,
+        params={'schema': METADATA_SCHEMA, 'table': MIGRATION_HISTORY_TABLE}
+    )
 
-    cur.close()
+    max_version = (
+        max_version_df['major'][0],
+        max_version_df['minor'][0],
+        max_version_df['patch'][0]
+    )
+
     return max_version
 
 
