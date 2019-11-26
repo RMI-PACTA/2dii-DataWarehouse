@@ -1,4 +1,20 @@
-  --Hydro Power Plants
+  --Power Extract
+  CREATE TABLE rawdata.globaldata_power_extract (
+    id serial PRIMARY KEY,
+    import_history_id INT NOT NULL REFERENCES rawdata.import_history(id),
+    cat_id INT,
+    company_name TEXT,
+    headquarters TEXT,
+    company_type TEXT,
+    parent_subsidiary TEXT,
+    parent_id INT,
+    parent_name TEXT,
+    stock_exchange TEXT,
+    ticker_symbol TEXT,
+    disclaimer TEXT
+  );
+
+  --Power Plants
   CREATE TABLE rawdata.globaldata_power_plants (
     id serial PRIMARY KEY,
     import_history_id INT NOT NULL REFERENCES rawdata.import_history(id),
@@ -40,22 +56,6 @@
     capacity_factor TEXT,
     decommissioning_year INTEGER,
     decommissioning_year_status TEXT
-  );
-
-  --Power Extract
-  CREATE TABLE rawdata.globaldata_power_extract (
-    id serial PRIMARY KEY,
-    import_history_id INT NOT NULL REFERENCES rawdata.import_history(id),
-    cat_id INT,
-    company_name TEXT,
-    headquarters TEXT,
-    company_type TEXT,
-    parent_subsidiary TEXT,
-    parent_id INT,
-    parent_name TEXT,
-    stock_exchange TEXT,
-    ticker_symbol TEXT,
-    disclaimer TEXT
   );
 
   --Power Purchase Agreements
