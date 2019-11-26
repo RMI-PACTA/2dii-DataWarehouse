@@ -4,51 +4,10 @@ import pandas as pd
 import twodii_datawarehouse.file_import.utils as utils
 
 
-power_plant_table_columns = [
-    "id",
-    "import_history_id",
-    "technology",
-    "global_reference_id",
-    "power_plant_id",
-    "power_plant_name",
-    "subsidiary_asset_name",
-    "fuel_category",
-    "primary_fuel",
-    "secondary_fuel",
-    "region",
-    "country",
-    "state_or_province",
-    "county",
-    "city_or_town",
-    "total_capacity",
-    "total_capacity_unit",
-    "active_capacity",
-    "active_capacity_unit",
-    "pipeline_capacity",
-    "pipeline_capacity_unit",
-    "discontinued_capacity",
-    "discontinued_capacity_unit",
-    "status",
-    "type_of_plant",
-    "owner_id",
-    "owner_name",
-    "owner_stake_percentage",
-    "operator_id",
-    "operator_name",
-    "epc_id",
-    "epc",
-    "year_online",
-    "latitude",
-    "longitude",
-    "capex_usd",
-    "efficiency_percentage",
-    "capacity_factor",
-    "decommissioning_year",
-    "decommissioning_year_status"
-]
-
-
-def parse_globaldata_power_plants(filepath):
+def parse_globaldata_power_plants(
+    filepath,
+    columns_name_list
+):
     """Read a table from read the global data powerplants file."""
     # Find the header row
     raw_data = pd.read_excel(
@@ -56,13 +15,77 @@ def parse_globaldata_power_plants(filepath):
         sheet_name=None,
         header=None
     )
-
     if len(raw_data.keys()) != 1:
         raise Exception(f"""Multiple sheets found in excel file,
                         but only one expected: {raw_data.keys()}""")
     raw_data = raw_data[list(raw_data.keys())[0]]
-    header_row, header_names = utils.find_header_row(
-        dataframe=raw_data,
-        columns_name_list=power_plant_table_columns
-    )
 
+    df = utils.clean_df_header(
+        df=raw_data,
+        columns_name_list=columns_name_list
+    )
+    df = utils.clean_df_footer(df)
+
+    # Table specific rename
+
+    if "total_capacity_(mw)" in df.columns:
+        df['total_capacity_unit'] = 'MW'
+        df = df.rename(
+            mapper={"total_capacity_(mw)": "total_capacity"},
+            axis='columns',
+            errors='raise'
+        )
+
+    if "active_capacity_(mw)" in df.columns:
+        df['active_capacity_unit'] = 'MW'
+        df = df.rename(
+            mapper={"active_capacity_(mw)": "active_capacity"},
+            axis='columns',
+            errors='raise'
+        )
+
+    if "pipeline_capacity_(mw)" in df.columns:
+        df['pipeline_capacity_unit'] = 'MW'
+        df = df.rename(
+            mapper={"pipeline_capacity_(mw)": "pipeline_capacity"},
+            axis='columns',
+            errors='raise'
+        )
+
+    if "discontinued_capacity_(mw)" in df.columns:
+        df['discontinued_capacity_unit'] = 'MW'
+        df = df.rename(
+            mapper={"discontinued_capacity_(mw)": "discontinued_capacity"},
+            axis='columns',
+            errors='raise'
+        )
+
+    if "owner_stake_(%)" in df.columns:
+        df = df.rename(
+            mapper={"owner_stake_(%)": "owner_stake_percentage"},
+            axis='columns',
+            errors='raise'
+        )
+
+    if "capex_usd_(million)" in df.columns:
+        df['capex_usd'] = df['capex_usd_(million)'] * 1e6
+        df = df.drop("capex_usd_(million)", axis='columns')
+
+    # if "efficiency_(%)" in df.columns:
+        df = df.rename(
+            mapper={"efficiency_(%)": "efficiency_percentage"},
+            axis='columns',
+            errors='raise'
+        )
+
+    if "decommissioning_year_(actual/estimated)" in df.columns:
+        df = df.rename(
+            mapper={
+                "decommissioning_year_(actual/estimated)":
+                    "decommissioning_year_status"
+            },
+            axis='columns',
+            errors='raise'
+        )
+
+    return df

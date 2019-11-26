@@ -1,6 +1,5 @@
 """Utility functions for file import."""
 import pandas as pd
-import pandas.io.sql as sqlio
 
 
 def find_header_row(
@@ -107,7 +106,7 @@ def check_table_exists_in_db(
     WHERE table_name = %(tablename)s
     AND table_schema = %(schemaname)s
     """
-    table_info = sqlio.read_sql(
+    table_info = pd.read_sql(
         sql=query,
         con=db_connection,
         params={'tablename': tablename, 'schemaname': schemaname}
@@ -152,7 +151,7 @@ def get_db_column_info(
         AND col.table_schema = %(schemaname)s
         ORDER BY ordinal_position
     """
-    col_info = sqlio.read_sql(
+    col_info = pd.read_sql(
         sql=query,
         con=db_connection,
         params={'tablename': tablename, 'schemaname': schemaname}
@@ -175,16 +174,30 @@ def write_df_to_db(
         schemaname=schemaname
     )
     target_columns = list(target_column_info['column_name'])
+
+    # Check that all of the columns in df have a column to go to in the target
+    # table
     bad_columns = [x for x in df.columns if x not in target_columns]
     if len(bad_columns):
         err_msg = ["Unexpected column names could not map to DB columns:"]
         err_msg.extend(bad_columns)
         raise Exception("\n\t".join(err_msg))
 
+    # Actually write the table to the database
+    df.to_sql(
+        con=db_connection,
+        name=tablename,
+        schema=schemaname,
+        if_exists='append',
+        index=False
+    )
+
 
 """
 
 importlib.reload(utils)
+importlib.reload(gd)
+df = gd.parse_globaldata_power_plants(fxx, power_plant_table_columns)
 utils.write_df_to_db(df, db_connection, 'globaldata_power_plants')
 
 """
