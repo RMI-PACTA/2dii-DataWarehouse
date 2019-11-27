@@ -1,5 +1,10 @@
 """Utility functions for file import."""
 import pandas as pd
+from hashlib import md5
+from datetime import datetime
+
+IMPORT_HISTORY_SCHEMA = 'rawdata'
+IMPORT_HISTORY_TABLE = 'import_history'
 
 
 def find_header_row(
@@ -89,7 +94,7 @@ def clean_df_footer(df, **kwargs):
 
 
 def check_table_exists_in_db(
-    db_engine,
+    db_connection,
     tablename,
     schemaname='rawdata',
     raise_exception=True
@@ -108,7 +113,7 @@ def check_table_exists_in_db(
     """
     table_info = pd.read_sql(
         sql=query,
-        con=db_engine,
+        con=db_connection,
         params={'tablename': tablename, 'schemaname': schemaname}
     )
     if raise_exception & (len(table_info) == 0):
@@ -117,14 +122,14 @@ def check_table_exists_in_db(
 
 
 def get_db_column_info(
-    db_engine,
+    db_connection,
     tablename,
     schemaname='rawdata'
 ):
     """Find the column names and types for a table."""
     # Before starting, check that the table exists
     check_table_exists_in_db(
-        db_engine=db_engine,
+        db_connection=db_connection,
         tablename=tablename,
         schemaname=schemaname,
         raise_exception=True
@@ -153,7 +158,7 @@ def get_db_column_info(
     """
     col_info = pd.read_sql(
         sql=query,
-        con=db_engine,
+        con=db_connection,
         params={'tablename': tablename, 'schemaname': schemaname}
     )
     if len(col_info) == 0:
@@ -161,15 +166,57 @@ def get_db_column_info(
     return col_info
 
 
+def add_to_import_history(
+    filepath,
+    db_connection,
+    import_source
+):
+    """Write to the import history table."""
+    with filepath.open('rb') as file:
+        filehash = md5(file.read())
+    import_history_data = {
+            "filehash": filehash.hexdigest(),
+            "filename": filepath.name,
+            "import_source": import_source,
+            "import_time": datetime.now()
+        }
+    pd.DataFrame(data=import_history_data, index=[0]).to_sql(
+        con=db_connection,
+        name=IMPORT_HISTORY_TABLE,
+        schema=IMPORT_HISTORY_SCHEMA,
+        if_exists='append',
+        index=False
+    )
+    # Using an fstring for table name here, because it's a parameter.
+    new_import_query = f"""
+        SELECT
+        id
+        FROM {IMPORT_HISTORY_SCHEMA}.{IMPORT_HISTORY_TABLE}
+        WHERE filehash = %(filehash)s
+        AND filename = %(filename)s
+        AND import_source = %(import_source)s
+        AND import_time = %(import_time)s
+    """
+    new_import_id = pd.read_sql(
+        con=db_connection,
+        sql=new_import_query,
+        params=import_history_data
+    )
+    if len(new_import_id) > 1:
+        raise Exception(f"Multiple matches for new import id: {new_import_id}")
+    new_import_id_int = int(new_import_id['id'][0])
+    return new_import_id_int
+
+
 def write_df_to_db(
     df,
-    db_engine,
+    db_connection,
     tablename,
     schemaname='rawdata'
 ):
     """Write the contents of a dataframe to the database."""
     target_column_info = get_db_column_info(
-        db_engine=db_engine,
+        db_connection=db_connection,
         tablename=tablename,
         schemaname=schemaname
     )
@@ -185,7 +232,7 @@ def write_df_to_db(
 
     # Actually write the table to the database
     df.to_sql(
-        con=db_engine,
+        con=db_connection,
         name=tablename,
         schema=schemaname,
         if_exists='append',
@@ -194,10 +241,5 @@ def write_df_to_db(
 
 
 """
-
-importlib.reload(utils)
-importlib.reload(gd)
-df = gd.parse_globaldata_power_plants(filename, power_plant_table_columns)
-utils.write_df_to_db(df, db_engine, 'globaldata_power_plants')
 
 """

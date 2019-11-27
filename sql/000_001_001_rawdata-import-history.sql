@@ -4,6 +4,6 @@
     id serial PRIMARY KEY,
     import_time TIMESTAMP NOT NULL,
     import_source varchar(128) NOT NULL,
-    filename text NULL,
-    file_md5 VARCHAR(32) NULL
+    filename VARCHAR(255) NOT NULL,
+    filehash VARCHAR(32) NOT NULL
   );

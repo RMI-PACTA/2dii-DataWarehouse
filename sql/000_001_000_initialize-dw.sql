@@ -3,7 +3,7 @@
     minor INT NOT NULL,
     patch INT NOT NULL,
     filename VARCHAR(255) NOT NULL,
-    filehash VARCHAR(255) NOT NULL,
+    filehash VARCHAR(32) NOT NULL,
     migration_time TIMESTAMP NOT NULL,
     PRIMARY KEY (major, minor, patch),
     CONSTRAINT dw_version_unique UNIQUE (major, minor, patch),
