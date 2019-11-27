@@ -1,7 +1,8 @@
 """Utility functions for file import."""
-import pandas as pd
-from hashlib import md5
 from datetime import datetime
+from hashlib import md5
+import logging
+import pandas as pd
 
 IMPORT_HISTORY_SCHEMA = 'rawdata'
 IMPORT_HISTORY_TABLE = 'import_history'
@@ -90,6 +91,27 @@ def clean_df_footer(df, **kwargs):
     if footer_start:
         remove_index = range(footer_start, df.index[-1] + 1)
         df = df.drop(remove_index)
+    return df
+
+
+def clean_empty_cols(df):
+    """Remove any columns which are entirely empty."""
+    # externalize the column list, so we arent' iterating over a changing list
+    col_list = df.columns
+    for col in col_list:
+        if all(pd.isna(df[col])):
+            df = df.drop(col, axis='columns')
+    return df
+
+
+def clean_df(df, columns_name_list, **kwargs):
+    """Multipurpose dataframe cleaning.
+
+    removes headers, footers and empty columns.
+    """
+    df = clean_df_header(df, columns_name_list, **kwargs)
+    df = clean_df_footer(df, **kwargs)
+    df = clean_empty_cols(df)
     return df
 
 
@@ -206,6 +228,36 @@ def add_to_import_history(
         raise Exception(f"Multiple matches for new import id: {new_import_id}")
     new_import_id_int = int(new_import_id['id'][0])
     return new_import_id_int
+
+
+def check_if_file_imported(filepath, db_connection):
+    """Determine if a file has already been imported."""
+    logging.debug(f"Checking import status for {filepath}")
+    with filepath.open('rb') as file:
+        filehash = md5(file.read())
+    import_history_data = {
+            "filehash": filehash.hexdigest(),
+            "filename": filepath.name
+        }
+    find_import_query = f"""
+        SELECT
+        id
+        FROM {IMPORT_HISTORY_SCHEMA}.{IMPORT_HISTORY_TABLE}
+        WHERE filehash = %(filehash)s
+        AND filename = %(filename)s
+        ORDER BY import_time DESC, id DESC
+        LIMIT 1
+    """
+    import_id = pd.read_sql(
+        con=db_connection,
+        sql=find_import_query,
+        params=import_history_data
+    )
+    logging.debug(import_id)
+    if len(import_id):
+        return int(import_id['id'][0])
+    else:
+        return None
 
 
 def write_df_to_db(
