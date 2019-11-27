@@ -5,9 +5,10 @@ warehouse, including bootstrapping an empty database.
 """
 
 import hashlib
+import logging
+import pandas as pd
 import pathlib
 import re
-import pandas as pd
 
 METADATA_SCHEMA = 'public'
 MIGRATION_HISTORY_TABLE = 'dw_version'
@@ -30,10 +31,10 @@ def run_migrations(
 
     dw_current_version = _get_dw_version(db_engine)
     if dw_current_version is None:
-        print("No Data warehouse found. Bootstrapping.")
+        logging.warning("No Data warehouse found. Bootstrapping.")
         dw_current_version = (0, 0, 0)
     else:
-        print(f"Data Warehouse at version {dw_current_version}.")
+        logging.info(f"Data Warehouse at version {dw_current_version}.")
 
     migration_files = list(migrations_path.glob("**/*.sql"))
     migrations_to_run = []
@@ -59,22 +60,24 @@ def run_migrations(
 
     for x in migrations_to_run:
         latest_migration = _parse_filename_version_number(x)
-        print(f"Running migration for version: {latest_migration}")
+        logging.info(f"Running migration for version: {latest_migration}")
         with x.open('rb') as file:
             file_query = file.read()
-        with db_engine.connect() as connection:
-            transaction = connection.begin()
-            connection.execute(file_query.decode('utf-8'))
-            connection.execute(
-                update_migration_history_query, {
-                    'major': latest_migration[0],
-                    'minor': latest_migration[1],
-                    'patch': latest_migration[2],
-                    'filename': x.name,
-                    'filehash': hasher(file_query).hexdigest()
-                }
+        with db_engine.begin() as db_con:
+            logging.debug(f"Running Query:\n{file_query}")
+            db_con.execute(file_query.decode('utf-8'))
+            history_dict = {
+                'major': latest_migration[0],
+                'minor': latest_migration[1],
+                'patch': latest_migration[2],
+                'filename': x.name,
+                'filehash': hasher(file_query).hexdigest()
+            }
+            logging.debug(f"Updating migration history:{history_dict}")
+            db_con.execute(
+                update_migration_history_query,
+                history_dict
             )
-            transaction.commit()
         dw_current_version = _get_dw_version(db_engine)
     return dw_current_version
 
@@ -88,7 +91,7 @@ def _get_dw_version(db_engine):
     determine the current version recorded int the migration history table, and
     report that.
     """
-    print("Finding current dw_version")
+    logging.info("Finding current dw_version")
 
     existence_check_query = f"""
     SELECT
@@ -99,6 +102,7 @@ def _get_dw_version(db_engine):
     LIMIT 1;
     """
 
+    logging.debug(f"searching for {METADATA_SCHEMA}.{MIGRATION_HISTORY_TABLE}")
     table_exists = pd.read_sql(
         con=db_engine,
         sql=existence_check_query,
@@ -106,6 +110,7 @@ def _get_dw_version(db_engine):
     )
 
     if len(table_exists) == 0:
+        logging.warning(f"Migration history table not found.")
         return None
 
     # Passing the name of a table is the only time we want to use string
@@ -136,6 +141,7 @@ def _get_dw_version(db_engine):
         max_version_df['patch'][0]
     )
 
+    logging.debug(max_version)
     return max_version
 
 

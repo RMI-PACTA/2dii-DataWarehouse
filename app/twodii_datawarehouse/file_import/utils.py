@@ -169,7 +169,7 @@ def get_db_column_info(
 def add_to_import_history(
     filepath,
     db_connection,
-    import_source
+    filetype
 ):
     """Write to the import history table."""
     with filepath.open('rb') as file:
@@ -177,7 +177,7 @@ def add_to_import_history(
     import_history_data = {
             "filehash": filehash.hexdigest(),
             "filename": filepath.name,
-            "import_source": import_source,
+            "filetype": filetype,
             "import_time": datetime.now()
         }
     pd.DataFrame(data=import_history_data, index=[0]).to_sql(
@@ -194,7 +194,7 @@ def add_to_import_history(
         FROM {IMPORT_HISTORY_SCHEMA}.{IMPORT_HISTORY_TABLE}
         WHERE filehash = %(filehash)s
         AND filename = %(filename)s
-        AND import_source = %(import_source)s
+        AND filetype = %(filetype)s
         AND import_time = %(import_time)s
     """
     new_import_id = pd.read_sql(
