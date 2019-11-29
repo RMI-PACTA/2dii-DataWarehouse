@@ -10,8 +10,7 @@
     parent_id INT,
     parent_name TEXT,
     stock_exchange TEXT,
-    ticker_symbol TEXT,
-    disclaimer TEXT
+    ticker_symbol TEXT
   );
 
   --Power Plants
@@ -62,7 +61,6 @@
   CREATE TABLE rawdata.globaldata_power_purchase_agreements (
     id serial PRIMARY KEY,
     import_history_id INT NOT NULL REFERENCES rawdata.import_history(id),
-    cover TEXT,
     announcement_date DATE,
     title TEXT,
     client_company TEXT,
@@ -87,6 +85,5 @@
     vendor_id INT,
     associated_plant_id INT,
     client_company_id INT,
-    global_reference_id INT,
-    disclaimer TEXT
+    global_reference_id INT
   );

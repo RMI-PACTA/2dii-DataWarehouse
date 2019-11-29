@@ -116,3 +116,35 @@ def parse_globaldata_power_extract(
             errors='raise'
         )
     return df
+
+
+def parse_globaldata_power_purchase_agreements(
+    filepath,
+    columns_name_list
+):
+    """Read a table from read the global data powerplants file."""
+    # Find the header row
+    raw_data = pd.read_excel(
+        io=filepath,
+        sheet_name=None,
+        header=None
+    )
+    raw_data = raw_data['Power Purchase Agreements']
+
+    df = utils.clean_df(
+        df=raw_data,
+        columns_name_list=columns_name_list
+    )
+
+    # Table specificecific renames
+    if "associated_plant_capacity_(mw)" in df.columns:
+        df['associated_plant_capacity_unit'] = 'MW'
+        df = df.rename(
+            mapper={
+                "associated_plant_capacity_(mw)": "associated_plant_capacity"
+            },
+            axis='columns',
+            errors='raise'
+        )
+
+    return df

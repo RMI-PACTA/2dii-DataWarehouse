@@ -30,6 +30,11 @@ def import_single_file(
     data_files_path=pathlib.PurePosixPath('/')
         ):
     """Orchestrate reading and import a file."""
+    if utils.check_if_file_imported(filepath, db_engine):
+        logging.info(
+            f"Already imported: {filepath.relative_to(data_files_path)}"
+        )
+        return None
     logging.info(f"Importing: {filepath.relative_to(data_files_path)}")
     logging.debug(f"Absolute path: {filepath}")
     file_info = _determine_file_type(filepath=filepath)
@@ -59,6 +64,7 @@ def import_single_file(
             tablename=file_info['tablename'],
             schemaname=schemaname
         )
+    return import_id
 
 
 def _determine_file_type(filepath):

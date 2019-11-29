@@ -1,4 +1,6 @@
 .env
+test/data_files/
+
 # Python: from https://github.com/github/gitignore/blob/master/Python.gitignore
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -78,7 +80,6 @@ target/
 
 # Jupyter Notebook
 .ipynb_checkpoints
-test/data_files
 
 # IPython
 profile_default/
