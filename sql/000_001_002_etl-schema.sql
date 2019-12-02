@@ -23,8 +23,6 @@ LANGUAGE PLPGSQL;
 /* but using dynamic sql doesn't seem to have any performance difference, and */
 /* adds in a check against incorrect column names (will throw an error that */
 /* column doesn't exist) */
-
-
 CREATE OR REPLACE FUNCTION etl.trigger_update_company_raw()
 RETURNS TRIGGER AS $$
 DECLARE
@@ -57,32 +55,3 @@ BEGIN
 END;
 $$ LANGUAGE PLPGSQL;
 
-CREATE TRIGGER tg_globaldata_power_plants_operator_name
-  AFTER INSERT OR UPDATE ON rawdata.globaldata_power_plants
-  FOR EACH ROW
-  EXECUTE PROCEDURE etl.trigger_update_company_raw('operator_name');
-
-CREATE TRIGGER tg_globaldata_power_plants_owner_name
-  AFTER INSERT OR UPDATE ON rawdata.globaldata_power_plants
-  FOR EACH ROW
-  EXECUTE PROCEDURE etl.trigger_update_company_raw('owner_name');
-
-CREATE TRIGGER tg_globaldata_power_extract_company_name
-  AFTER INSERT OR UPDATE ON rawdata.globaldata_power_extract
-  FOR EACH ROW
-  EXECUTE PROCEDURE etl.trigger_update_company_raw('company_name');
-
-CREATE TRIGGER tg_globaldata_power_extract_parent_name
-  AFTER INSERT OR UPDATE ON rawdata.globaldata_power_extract
-  FOR EACH ROW
-  EXECUTE PROCEDURE etl.trigger_update_company_raw('parent_name');
-
-CREATE TRIGGER tg_globaldata_power_purchase_agreements_client_company
-  AFTER INSERT OR UPDATE ON rawdata.globaldata_power_purchase_agreements
-  FOR EACH ROW
-  EXECUTE PROCEDURE etl.trigger_update_company_raw('client_company');
-
-CREATE TRIGGER tg_globaldata_power_purchase_agreements_vendor_company
-  AFTER INSERT OR UPDATE ON rawdata.globaldata_power_purchase_agreements
-  FOR EACH ROW
-  EXECUTE PROCEDURE etl.trigger_update_company_raw('vendor_company');
