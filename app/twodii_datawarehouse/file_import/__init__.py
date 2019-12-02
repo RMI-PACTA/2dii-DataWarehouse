@@ -22,6 +22,7 @@ def import_all_files(
             db_engine=db_engine,
             data_files_path=data_files_path
         )
+    logging.info(f"Imported all files in {data_files_path}")
 
 
 def import_single_file(

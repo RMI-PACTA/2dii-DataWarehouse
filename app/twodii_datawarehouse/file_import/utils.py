@@ -288,10 +288,6 @@ def write_df_to_db(
         name=tablename,
         schema=schemaname,
         if_exists='append',
-        index=False
+        index=False,
+        # method='multi'
     )
-
-
-"""
-
-"""

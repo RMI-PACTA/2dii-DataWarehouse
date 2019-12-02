@@ -65,7 +65,11 @@ def run_migrations(
             file_query = file.read()
         with db_engine.begin() as db_con:
             logging.debug(f"Running Query:\n{file_query}")
-            db_con.execute(file_query.decode('utf-8'))
+            # Setting no_parameters to true allows us to use literal, single
+            # unescaped percent symbols (%) in our migration scripts
+            db_con.\
+                execution_options(no_parameters=True).\
+                execute(file_query.decode('utf-8'))
             history_dict = {
                 'major': latest_migration[0],
                 'minor': latest_migration[1],
