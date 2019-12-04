@@ -2,7 +2,8 @@
 version: "3.7"
 services:
   app:
-    command: ["wait-for.sh", "db:5432", "--", "pytest", "/usr/src/test/pytest"]
+    # command: ["wait-for.sh", "db:5432", "--", "pytest", "/usr/src/test/pytest"]
+    command: ["wait-for.sh", "db:5432", "--", "bash"]
     depends_on:
       - db
     stdin_open: true
