@@ -5,7 +5,8 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    command: ["bash"]
+    # command: ["bash"]
+    command: ["wait-for.sh", "db:5432", "--", "pytest", "/usr/src/test/pytest"]
     depends_on:
       - db
     environment:
@@ -15,7 +16,9 @@ services:
     volumes:
       - "${PWD}/test/data_files/:/tmp/data_files"
       - "${PWD}/app/:/usr/src/app/"
-      - "${PWD}/sql:/tmp/sql"
+      - "${PWD}/sql:/usr/src/sql"
+      - "${PWD}/scripts:/usr/src/scripts"
+      - "${PWD}/test:/usr/src/test"
 
   db:
     environment:
