@@ -24,8 +24,3 @@ def test_find_simple_header():
     )
     assert header_row == 0
     assert header_names == ["inta", "strb", "floatc", "intd", "stre", "floatf"]
-
-
-def test_fail():
-    """Test a failing condition for CI/CD servers."""
-    assert 1 == 0
