@@ -1,0 +1,19 @@
+---
+version: "3.7"
+services:
+  app:
+    command: ["wait-for.sh", "db:5432", "--", "bash", "-c", "python twodii_datawarehouse.py -v && ls"]
+
+  db_check:
+    image: hbpmip/pgtap:0.96.0-5
+    restart: unless-stopped
+    depends_on:
+      - db
+    environment:
+      DATABASE: twodii
+      HOST: db
+      USER: postgres
+      PASSWORD: postgres
+      TESTS: /test/*.sql -v
+    volumes:
+      - ./test/pgtap/:/test/
