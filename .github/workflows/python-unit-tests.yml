@@ -10,7 +10,14 @@ jobs:
 
     steps:
       - uses: actions/checkout@v1
-      - name: Run a one-line script
+      - name: Build docker image
         run: docker-compose build
-      - name: Run a multi-line script
-        run: docker-compose up --exit-code-from app app
+      - name: Run unit tests
+        run: |
+          docker-compose \
+          -f docker-compose.yml \
+          -f docker-compose.override.yml \
+          -f docker-compose.test.yml \
+          up \
+          --exit-code-from app \
+          app
