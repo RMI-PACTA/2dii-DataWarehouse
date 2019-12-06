@@ -2,7 +2,6 @@
 version: "3.7"
 services:
   app:
-    # command: ["wait-for.sh", "db:5432", "--", "pytest", "/usr/src/test/pytest"]
     command: ["wait-for.sh", "db:5432", "--", "bash"]
     depends_on:
       - db
@@ -14,6 +13,8 @@ services:
       - "${PWD}/sql:/usr/src/sql"
       - "${PWD}/scripts:/usr/src/scripts"
       - "${PWD}/test:/usr/src/test"
+    networks:
+      - backend
 
   db:
     environment:
@@ -25,6 +26,8 @@ services:
       - "${POSTGRES_EXPOSE_PORT:-5432}:5432"
     volumes:
       - "pgdata:/var/lib/postgresql/data"
+    networks:
+      - backend
 
   pgadmin:
     depends_on:
@@ -42,3 +45,7 @@ services:
 
 volumes:
   pgdata:
+
+networks:
+  backend:
+    driver: bridge

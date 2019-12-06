@@ -16,7 +16,7 @@ import twodii_datawarehouse.migrations as migrations
 import twodii_datawarehouse.file_import as fi
 
 
-def main():
+def main(migrations_only=False):
     """Run database migrations and import data."""
     # This will generate the db connection (from envvars), find current
     # version, run new migrations, and load any data
@@ -35,6 +35,9 @@ def main():
 
     print("Section 1: Migrations")
     migrations.run_migrations(db_engine)
+    if migrations_only:
+        logging.warning("only running migrations.")
+        return 0
 
     print("Section 2: Importing Files")
     fi.import_all_files(db_engine)
@@ -44,6 +47,10 @@ if __name__ == '__main__':
     # Enable logging levels, using -v or -vv flags
     parser = argparse.ArgumentParser()
     parser.add_argument('-v', '--verbose', action='count', default=0)
+    parser.add_argument(
+        '-m', '--migrations-only',
+        dest='migrations_only', action='store_true'
+    )
     args = parser.parse_args()
     levels = [logging.WARNING, logging.INFO, logging.DEBUG]
     level = levels[min(len(levels)-1, args.verbose)]  # capped number of levels
@@ -52,4 +59,4 @@ if __name__ == '__main__':
         format="%(asctime)sZ %(levelname)s %(message)s",
         datefmt="%Y-%m-%dT%H:%M:%S"
     )
-    main()
+    main(args.migrations_only)
