@@ -2,7 +2,7 @@
 version: "3.7"
 services:
   app:
-    command: ["wait-for.sh", "db:5432", "--", "bash", "-c", "python twodii_datawarehouse.py -v && ls"]
+    command: ["wait-for.sh", "db:5432", "--", "bash", "-c", "python twodii_datawarehouse.py -v --migrations-only"]
 
   db_check:
     image: hbpmip/pgtap:0.96.0-5
@@ -17,3 +17,5 @@ services:
       TESTS: /test/*.sql -v
     volumes:
       - ./test/pgtap/:/test/
+    networks:
+      - backend
