@@ -1,4 +1,4 @@
-/* transliteration OF codepoints IS hard. */
+/* transliteration OF codepoints is hard. */
 /* See https://en.wikipedia.org/wiki/Basic_Latin_(Unicode_block) */
 /* https://en.wikipedia.org/wiki/Latin-1_Supplement_%28Unicode_block%29 */
 
@@ -7,20 +7,20 @@
 * unidecode: */
 /* https://metacpan.org/source/SBURKE/Text-Unidecode-1.30/lib/Text/Unidecode/x00.pm */
 
-/* U+0009		Horizontal tab */
-/* U+0020	 	Space	*/
-/* U+00A0	 	Non-breaking space */
-/* U+00AD		Soft hyphen */
+/* U+0009: Horizontal tab */
+/* U+0020: Space*/
+/* U+00A0: Non-breaking space */
+/* U+00AD: Soft hyphen */
 CREATE OR REPLACE FUNCTION etl.clean_whitespace(string TEXT)
 RETURNS TEXT AS $$
-BEGIN	
+BEGIN
   string := regexp_replace(
     string, 
     /* These are the ascii (hexidecimal) codepoints for: (0009: Tab), (0020:
      * Space), (00A0: nonbreaking space), (00AD: soft hyphen). using + at the
      * end means that multiple consecutive characters in this group will be
      * collapsed, so tab-tab would collapse to a single space. */
-    '[\u0009\u0020\u00A0\u00AD]+', 
+    '[\u0009\u0020\u00A0]+', 
     chr(32), -- 32 is codepoint for simple space character
     'g' -- Replace all occurances in the string
   );
@@ -28,113 +28,9 @@ BEGIN
 END; $$
 LANGUAGE PLPGSQL;
 
-/* U+0021	!	Exclamation mark */
-/* U+0022	"	Quotation mark */
-/* U+0023	#	Number sign */	
-/* U+0024	$	Dollar sign */	
-/* U+0025	%	Percent sign */	
-/* U+0026	&	Ampersand */	
-/* U+0027	'	Apostrophe */	
-/* U+0028	(	Left parenthesis */	
-/* U+0029	)	Right parenthesis */	
-/* U+002A	*	Asterisk */	
-/* U+002B	+	Plus sign */	
-/* U+002C	,	Comma */	
-/* U+002D	-	Hyphen-minus */	
-/* U+002E	.	Full stop or period */	
-/* U+002F	/	Solidus or Slash */
-/* ---- */
-/* U+003A	:	Colon */	
-/* U+003B	;	Semicolon */	
-/* U+003C	<	Less-than sign */	
-/* U+003D	=	Equal sign */	
-/* U+003E	>	Greater-than sign */	
-/* U+003F	?	Question mark */	
-/* U+0040	@	At sign or Commercial at */
-/* ---- */
-/* U+005B	[	Left Square Bracket */	
-/* U+005C	\	Backslash [A] */	
-/* U+005D	]	Right Square Bracket */	
-/* U+005E	^	Circumflex accent */	
-/* U+005F	_	Low line */	
-/* U+0060	`	Grave accent */
-/* ---- */
-/* U+007B	{	Left Curly Bracket */	
-/* U+007C	|	Vertical bar */	
-/* U+007D	}	Right Curly Bracket */	
-/* U+007E	~	Tilde */
-CREATE OR REPLACE FUNCTION etl.clean_punctuation(string TEXT)
-RETURNS TEXT AS $$
-BEGIN	
-  RETURN regexp_replace(
-    string, 
-    '[\u0021-u002F\u003A-\u0040\u005B-\u0060\u007B-\u007E]+', 
-    chr(32), -- 32 is codepoint for simple space character
-    'g' -- Replace all occurances in the string
-  );
-END; $$
-LANGUAGE PLPGSQL;
-
-
-
-
-CREATE OR REPLACE FUNCTION etl.normalize_accents(string TEXT)
-RETURNS TEXT AS $$
-BEGIN
-  /* for each substitution, replace the unicode character with the
-   * transliterated ascii character, in both lower and uppercase. */
-  string := replace(string, 'ä', 'ae');
-  string := replace(string, 'Ä', 'AE');
-
-  string := replace(string, 'å', 'a');
-  string := replace(string, 'Å', 'A');
-
-  string := replace(string, 'ü', 'u');
-  string := replace(string, 'Ü', 'U');
-
-  string := replace(string, 'ß', 'ss');
-  -- No ß in uppercase
-
-  string := replace(string, 'ï', 'i');
-  string := replace(string, 'Ï', 'I');
-  
-  string := replace(string, 'é', 'e');
-  string := replace(string, 'É', 'E');
-
-  string := replace(string, 'è', 'e');
-  string := replace(string, 'È', 'E');
-
-  string := replace(string, 'ö', 'oe');
-  string := replace(string, 'Ö', 'OE');
-
-  string := replace(string, 'ø', 'o');
-  string := replace(string, 'Ø', 'O');
-
-  string := replace(string, 'ó', 'o');
-  string := replace(string, 'Ó', 'O');
-
-  string := replace(string, 'ğ', 'g');
-  string := replace(string, 'Ğ', 'G');
-
-  string := replace(string, 'ç', 'c');
-  string := replace(string, 'Ç', 'C');
-  
-  string := replace(string, 'ı', 'i');
-  -- No ı in uppercase
-
-  string := replace(string, 'ş', 's');
-  string := replace(string, 'Ş', 'S');
-
-  string := replace(string, 'à', 'a');
-  string := replace(string, 'À', 'A');
-  RETURN string;
-END; $$
-LANGUAGE PLPGSQL;
-
-
 CREATE OR REPLACE FUNCTION etl.is_ascii(string TEXT)
 RETURNS BOOLEAN AS $$
-BEGIN	
+BEGIN
   /* (Space) through (Tilde) represents the printable ASCII RANGE */
   return string ~ '[ -~]*';
 END; $$
@@ -142,9 +38,655 @@ LANGUAGE PLPGSQL;
 
 CREATE OR REPLACE FUNCTION etl.is_lower_ascii(string TEXT)
 RETURNS BOOLEAN AS $$
-BEGIN	
+BEGIN
   return string ~ '[a-z0-9]*';
 END; $$
 LANGUAGE PLPGSQL;
 
+CREATE OR REPLACE FUNCTION etl.romanize_unicode(string TEXT)
+RETURNS TEXT AS $$
+DECLARE codepoint RECORD;
+BEGIN
+  FOR codepoint IN (
+    SELECT
+    unicode_character,
+    romanized_character
+    FROM etl.unicode_point
+  )
+  LOOP
+    string = replace(string, codepoint.unicode_character, codepoint.romanized_character);
+  END LOOP;
+  RETURN string;
+END; $$
+LANGUAGE PLPGSQL;
 
+CREATE OR REPLACE FUNCTION etl.simplify_unicode(string TEXT)
+RETURNS TEXT AS $$
+DECLARE codepoint RECORD;
+BEGIN
+  FOR codepoint IN (
+    SELECT
+    unicode_character,
+    simple_romanized_character
+    FROM etl.unicode_point
+  )
+  LOOP
+    string = replace(string, codepoint.unicode_character, codepoint.simple_romanized_character);
+  END LOOP;
+  RETURN string;
+END; $$
+LANGUAGE PLPGSQL;
+
+CREATE TABLE etl.unicode_point (
+  unicode_character TEXT PRIMARY KEY,
+  codepoint TEXT UNIQUE NOT NULL,
+  romanized_character TEXT NOT NULL,
+  simple_romanized_character TEXT NOT NULL,
+  description TEXT,
+  block_name TEXT,
+  category TEXT,
+  notes TEXT
+);
+
+INSERT INTO etl.unicode_point (
+  unicode_character,
+  codepoint,
+  romanized_character,
+  simple_romanized_character,
+  description,
+  block_name,
+  category,
+  notes
+) VALUES
+('NUL', '0000', '', '', 'Null character', 'Basic Latin', 'Control', 'NUL'),
+('SOH', '0001', '', '', 'Start of Heading', 'Basic Latin', 'Control', 'SOH'),
+('STX', '0002', '', '', 'Start of Text', 'Basic Latin', 'Control', 'STX'),
+('ETX', '0003', '', '', 'End-of-text character', 'Basic Latin', 'Control', 'ETX'),
+('EOT', '0004', '', '', 'End-of-transmission character', 'Basic Latin', 'Control', 'EOT'),
+('ENQ', '0005', '', '', 'Enquiry character', 'Basic Latin', 'Control', 'ENQ'),
+('ACK', '0006', '', '', 'Acknowledge character', 'Basic Latin', 'Control', 'ACK'),
+('BEL', '0007', '', '', 'Bell character', 'Basic Latin', 'Control', 'BEL'),
+('BS', '0008', '', '', 'Backspace', 'Basic Latin', 'Control', 'BS'),
+('HT', '0009', ' ', ' ', 'Horizontal tab', 'Basic Latin', 'Whitespace', 'HT'),
+('LF', '000A', ' ', ' ', 'Line feed', 'Basic Latin', 'Whitespace', 'LF'),
+('VT', '000B', ' ', ' ', 'Vertical tab', 'Basic Latin', 'Whitespace', 'VT'),
+('FF', '000C', ' ', ' ', 'Form feed', 'Basic Latin', 'Whitespace', 'FF'),
+('CR', '000D', ' ', ' ', 'Carriage return', 'Basic Latin', 'Whitespace', 'CR'),
+('SO', '000E', '', '', 'Shift Out', 'Basic Latin', 'Control', 'SO'),
+('SI', '000F', '', '', 'Shift In', 'Basic Latin', 'Control', 'SI'),
+('DLE', '0010', '', '', 'Data Link Escape', 'Basic Latin', 'Control', 'DLE'),
+('DC1', '0011', '', '', 'Device Control 1', 'Basic Latin', 'Control', 'DC1'),
+('DC2', '0012', '', '', 'Device Control 2', 'Basic Latin', 'Control', 'DC2'),
+('DC3', '0013', '', '', 'Device Control 3', 'Basic Latin', 'Control', 'DC3'),
+('DC4', '0014', '', '', 'Device Control 4', 'Basic Latin', 'Control', 'DC4'),
+('NAK', '0015', '', '', 'Negative-acknowledge character', 'Basic Latin', 'Control', 'NAK'),
+('SYN', '0016', '', '', 'Synchronous Idle', 'Basic Latin', 'Control', 'SYN'),
+('ETB', '0017', '', '', 'End of Transmission Block', 'Basic Latin', 'Control', 'ETB'),
+('CAN', '0018', '', '', 'Cancel character', 'Basic Latin', 'Control', 'CAN'),
+('EM', '0019', '', '', 'End of Medium', 'Basic Latin', 'Control', 'EM'),
+('SUB', '001A', '', '', 'Substitute character', 'Basic Latin', 'Control', 'SUB'),
+('ESC', '001B', '', '', 'Escape character', 'Basic Latin', 'Control', 'ESC'),
+('FS', '001C', '', '', 'File Separator', 'Basic Latin', 'Control', 'FS'),
+('GS', '001D', '', '', 'Group Separator', 'Basic Latin', 'Control', 'GS'),
+('RS', '001E', '', '', 'Record Separator', 'Basic Latin', 'Control', 'RS'),
+('US', '001F', '', '', 'Unit Separator', 'Basic Latin', 'Control', 'US'),
+(' ', '0020', ' ', ' ', 'Space', 'Basic Latin', 'Whitespace', 'SP'),
+('!', '0021', '!', '', 'Exclamation mark', 'Basic Latin', 'Punctuation', 'EXC'),
+('"', '0022', '"', '', 'Quotation mark', 'Basic Latin', 'Punctuation', 'QUO'),
+('#', '0023', '#', '', 'Number sign', 'Basic Latin', 'Punctuation', NULL),
+('$', '0024', '$', '', 'Dollar sign', 'Basic Latin', 'Punctuation', NULL),
+('%', '0025', '%', '', 'Percent sign', 'Basic Latin', 'Punctuation', NULL),
+('&', '0026', '&', '', 'Ampersand', 'Basic Latin', 'Punctuation', NULL),
+('''', '0027', '''', '', 'Apostrophe', 'Basic Latin', 'Punctuation', NULL),
+('(', '0028', '(', '', 'Left parenthesis', 'Basic Latin', 'Punctuation', NULL),
+(')', '0029', ')', '', 'Right parenthesis', 'Basic Latin', 'Punctuation', NULL),
+('*', '002A', '*', '', 'Asterisk', 'Basic Latin', 'Punctuation', NULL),
+('+', '002B', '+', '', 'Plus sign', 'Basic Latin', 'Punctuation', NULL),
+(',', '002C', ',', '', 'Comma', 'Basic Latin', 'Punctuation', NULL),
+('-', '002D', '-', '', 'Hyphen-minus', 'Basic Latin', 'Punctuation', NULL),
+('.', '002E', '.', '', 'Full stop or period', 'Basic Latin', 'Punctuation', NULL),
+('/', '002F', '/', '', 'Solidus or Slash', 'Basic Latin', 'Punctuation', NULL),
+('0', '0030', '0', '0', 'Digit Zero', 'Basic Latin', 'Digit', NULL),
+('1', '0031', '1', '1', 'Digit One', 'Basic Latin', 'Digit', NULL),
+('2', '0032', '2', '2', 'Digit Two', 'Basic Latin', 'Digit', NULL),
+('3', '0033', '3', '3', 'Digit Three', 'Basic Latin', 'Digit', NULL),
+('4', '0034', '4', '4', 'Digit Four', 'Basic Latin', 'Digit', NULL),
+('5', '0035', '5', '5', 'Digit Five', 'Basic Latin', 'Digit', NULL),
+('6', '0036', '6', '6', 'Digit Six', 'Basic Latin', 'Digit', NULL),
+('7', '0037', '7', '7', 'Digit Seven', 'Basic Latin', 'Digit', NULL),
+('8', '0038', '8', '8', 'Digit Eight', 'Basic Latin', 'Digit', NULL),
+('9', '0039', '9', '9', 'Digit Nine', 'Basic Latin', 'Digit', NULL),
+(':', '003A', ':', '', 'Colon', 'Basic Latin', 'Punctuation', NULL),
+(';', '003B', ';', '', 'Semicolon', 'Basic Latin', 'Punctuation', NULL),
+('<', '003C', '<', '', 'Less-than sign', 'Basic Latin', 'Punctuation', NULL),
+('=', '003D', '=', '', 'Equal sign', 'Basic Latin', 'Punctuation', NULL),
+('>', '003E', '>', '', 'Greater-than sign', 'Basic Latin', 'Punctuation', NULL),
+('?', '003F', '?', '', 'Question mark', 'Basic Latin', 'Punctuation', NULL),
+('@', '0040', '@', '', 'At sign or Commercial at', 'Basic Latin', 'Punctuation', NULL),
+('A', '0041', 'A', 'a', 'Latin Capital letter A', 'Basic Latin', 'ASCII Letters', NULL),
+('B', '0042', 'B', 'b', 'Latin Capital letter B', 'Basic Latin', 'ASCII letters', NULL),
+('C', '0043', 'C', 'c', 'Latin Capital letter C', 'Basic Latin', 'ASCII letters', NULL),
+('D', '0044', 'D', 'd', 'Latin Capital letter D', 'Basic Latin', 'ASCII letters', NULL),
+('E', '0045', 'E', 'e', 'Latin Capital letter E', 'Basic Latin', 'ASCII letters', NULL),
+('F', '0046', 'F', 'f', 'Latin Capital letter F', 'Basic Latin', 'ASCII letters', NULL),
+('G', '0047', 'G', 'g', 'Latin Capital letter G', 'Basic Latin', 'ASCII letters', NULL),
+('H', '0048', 'H', 'h', 'Latin Capital letter H', 'Basic Latin', 'ASCII letters', NULL),
+('I', '0049', 'I', 'i', 'Latin Capital letter I', 'Basic Latin', 'ASCII letters', NULL),
+('J', '004A', 'J', 'j', 'Latin Capital letter J', 'Basic Latin', 'ASCII letters', NULL),
+('K', '004B', 'K', 'k', 'Latin Capital letter K', 'Basic Latin', 'ASCII letters', NULL),
+('L', '004C', 'L', 'l', 'Latin Capital letter L', 'Basic Latin', 'ASCII letters', NULL),
+('M', '004D', 'M', 'm', 'Latin Capital letter M', 'Basic Latin', 'ASCII letters', NULL),
+('N', '004E', 'N', 'n', 'Latin Capital letter N', 'Basic Latin', 'ASCII letters', NULL),
+('O', '004F', 'O', 'o', 'Latin Capital letter O', 'Basic Latin', 'ASCII letters', NULL),
+('P', '0050', 'P', 'p', 'Latin Capital letter P', 'Basic Latin', 'ASCII letters', NULL),
+('Q', '0051', 'Q', 'q', 'Latin Capital letter Q', 'Basic Latin', 'ASCII letters', NULL),
+('R', '0052', 'R', 'r', 'Latin Capital letter R', 'Basic Latin', 'ASCII letters', NULL),
+('S', '0053', 'S', 's', 'Latin Capital letter S', 'Basic Latin', 'ASCII letters', NULL),
+('T', '0054', 'T', 't', 'Latin Capital letter T', 'Basic Latin', 'ASCII letters', NULL),
+('U', '0055', 'U', 'u', 'Latin Capital letter U', 'Basic Latin', 'ASCII letters', NULL),
+('V', '0056', 'V', 'v', 'Latin Capital letter V', 'Basic Latin', 'ASCII letters', NULL),
+('W', '0057', 'W', 'w', 'Latin Capital letter W', 'Basic Latin', 'ASCII letters', NULL),
+('X', '0058', 'X', 'x', 'Latin Capital letter X', 'Basic Latin', 'ASCII letters', NULL),
+('Y', '0059', 'Y', 'y', 'Latin Capital letter Y', 'Basic Latin', 'ASCII letters', NULL),
+('Z', '005A', 'Z', 'z', 'Latin Capital letter Z', 'Basic Latin', 'ASCII letters', NULL),
+('[', '005B', '[', '', 'Left Square Bracket', 'Basic Latin', 'Punctuation', NULL),
+('\', '005C', '\', '', 'Backslash [A]', 'Basic Latin', 'Punctuation', NULL),
+(']', '005D', ']', '', 'Right Square Bracket', 'Basic Latin', 'Punctuation', NULL),
+('^', '005E', '^', '', 'Circumflex accent', 'Basic Latin', 'Punctuation', NULL),
+('_', '005F', '_', '', 'Low line', 'Basic Latin', 'Punctuation', NULL),
+('`', '0060', '`', '', 'Grave accent', 'Basic Latin', 'Punctuation', NULL),
+('a', '0061', 'a', 'a', 'Latin Small Letter A', 'Basic Latin', 'ASCII letters', NULL),
+('b', '0062', 'b', 'b', 'Latin Small Letter B', 'Basic Latin', 'ASCII letters', NULL),
+('c', '0063', 'c', 'c', 'Latin Small Letter C', 'Basic Latin', 'ASCII letters', NULL),
+('d', '0064', 'd', 'd', 'Latin Small Letter D', 'Basic Latin', 'ASCII letters', NULL),
+('e', '0065', 'e', 'e', 'Latin Small Letter E', 'Basic Latin', 'ASCII letters', NULL),
+('f', '0066', 'f', 'f', 'Latin Small Letter F', 'Basic Latin', 'ASCII letters', NULL),
+('g', '0067', 'g', 'g', 'Latin Small Letter G', 'Basic Latin', 'ASCII letters', NULL),
+('h', '0068', 'h', 'h', 'Latin Small Letter H', 'Basic Latin', 'ASCII letters', NULL),
+('i', '0069', 'i', 'i', 'Latin Small Letter I', 'Basic Latin', 'ASCII letters', NULL),
+('j', '006A', 'j', 'j', 'Latin Small Letter J', 'Basic Latin', 'ASCII letters', NULL),
+('k', '006B', 'k', 'k', 'Latin Small Letter K', 'Basic Latin', 'ASCII letters', NULL),
+('l', '006C', 'l', 'l', 'Latin Small Letter L', 'Basic Latin', 'ASCII letters', NULL),
+('m', '006D', 'm', 'm', 'Latin Small Letter M', 'Basic Latin', 'ASCII letters', NULL),
+('n', '006E', 'n', 'n', 'Latin Small Letter N', 'Basic Latin', 'ASCII letters', NULL),
+('o', '006F', 'o', 'o', 'Latin Small Letter O', 'Basic Latin', 'ASCII letters', NULL),
+('p', '0070', 'p', 'p', 'Latin Small Letter P', 'Basic Latin', 'ASCII letters', NULL),
+('q', '0071', 'q', 'q', 'Latin Small Letter Q', 'Basic Latin', 'ASCII letters', NULL),
+('r', '0072', 'r', 'r', 'Latin Small Letter R', 'Basic Latin', 'ASCII letters', NULL),
+('s', '0073', 's', 's', 'Latin Small Letter S', 'Basic Latin', 'ASCII letters', NULL),
+('t', '0074', 't', 't', 'Latin Small Letter T', 'Basic Latin', 'ASCII letters', NULL),
+('u', '0075', 'u', 'u', 'Latin Small Letter U', 'Basic Latin', 'ASCII letters', NULL),
+('v', '0076', 'v', 'v', 'Latin Small Letter V', 'Basic Latin', 'ASCII letters', NULL),
+('w', '0077', 'w', 'w', 'Latin Small Letter W', 'Basic Latin', 'ASCII letters', NULL),
+('x', '0078', 'x', 'x', 'Latin Small Letter X', 'Basic Latin', 'ASCII letters', NULL),
+('y', '0079', 'y', 'y', 'Latin Small Letter Y', 'Basic Latin', 'ASCII letters', NULL),
+('z', '007A', 'z', 'z', 'Latin Small Letter Z', 'Basic Latin', 'ASCII letters', NULL),
+('{', '007B', '{', '', 'Left Curly Bracket', 'Basic Latin', 'Punctuation', NULL),
+('|', '007C', '|', '', 'Vertical bar', 'Basic Latin', 'Punctuation', NULL),
+('}', '007D', '}', '', 'Right Curly Bracket', 'Basic Latin', 'Punctuation', NULL),
+('~', '007E', '~', '', 'Tilde', 'Basic Latin', 'Punctuation', NULL),
+('DEL', '007F', '', '', 'Delete', 'Basic Latin', 'Control', 'DEL'),
+('PAD', '0080', '', '', 'Padding Character', 'Latin-1 Supplement', 'Control', 'PAD'),
+('HOP', '0081', '', '', 'High Octet Preset', 'Latin-1 Supplement', 'Control', 'HOP'),
+('BPH', '0082', '', '', 'Break Permitted Here', 'Latin-1 Supplement', 'Control', 'BPH'),
+('NBH', '0083', '', '', 'No Break Here', 'Latin-1 Supplement', 'Control', 'NBH'),
+('IND', '0084', '', '', 'Index', 'Latin-1 Supplement', 'Control', 'IND'),
+('NEL', '0085', '', '', 'Next Line', 'Latin-1 Supplement', 'Control', 'NEL'),
+('SSA', '0086', '', '', 'Start of Selected Area', 'Latin-1 Supplement', 'Control', 'SSA'),
+('ESA', '0087', '', '', 'End of Selected Area', 'Latin-1 Supplement', 'Control', 'ESA'),
+('HTS', '0088', '', '', 'Character (Horizontal) Tabulation Set', 'Latin-1 Supplement', 'Control', 'HTS'),
+('HTJ', '0089', '', '', 'Character (Horizontal) Tabulation with Justification', 'Latin-1 Supplement', 'Control', 'HTJ'),
+('LTS', '008A', '', '', 'Line (Vertical) Tabulation Set', 'Latin-1 Supplement', 'Control', 'LTS'),
+('PLD', '008B', '', '', 'Partial Line Forward (Down)', 'Latin-1 Supplement', 'Control', 'PLD'),
+('PLU', '008C', '', '', 'Partial Line Backward (Up)', 'Latin-1 Supplement', 'Control', 'PLU'),
+('RI', '008D', '', '', 'Reverse Line Feed (Index)', 'Latin-1 Supplement', 'Control', 'RI'),
+('SS2', '008E', '', '', 'Single-Shift Two', 'Latin-1 Supplement', 'Control', 'SS2'),
+('SS3', '008F', '', '', 'Single-Shift Three', 'Latin-1 Supplement', 'Control', 'SS3'),
+('DCS', '0090', '', '', 'Device Control String', 'Latin-1 Supplement', 'Control', 'DCS'),
+('PU1', '0091', '', '', 'Private Use One', 'Latin-1 Supplement', 'Control', 'PU1'),
+('PU2', '0092', '', '', 'Private Use Two', 'Latin-1 Supplement', 'Control', 'PU2'),
+('STS', '0093', '', '', 'Set Transmit State', 'Latin-1 Supplement', 'Control', 'STS'),
+('CCH', '0094', '', '', 'Cancel character', 'Latin-1 Supplement', 'Control', 'CCH'),
+('MW', '0095', '', '', 'Message Waiting', 'Latin-1 Supplement', 'Control', 'MW'),
+('SPA', '0096', '', '', 'Start of Protected Area', 'Latin-1 Supplement', 'Control', 'SPA'),
+('EPA', '0097', '', '', 'End of Protected Area', 'Latin-1 Supplement', 'Control', 'EPA'),
+('SOS', '0098', '', '', 'Start of String', 'Latin-1 Supplement', 'Control', 'SOS'),
+('SGCI', '0099', '', '', 'Single Graphic Character Introducer', 'Latin-1 Supplement', 'Control', 'SGCI'),
+('SCI', '009A', '', '', 'Single Character Introducer', 'Latin-1 Supplement', 'Control', 'SCI'),
+('CSI', '009B', '', '', 'Control Sequence Introducer', 'Latin-1 Supplement', 'Control', 'CSI'),
+('ST', '009C', '', '', 'String Terminator', 'Latin-1 Supplement', 'Control', 'ST'),
+('OSC', '009D', '', '', 'Operating System Command', 'Latin-1 Supplement', 'Control', 'OSC'),
+('PM', '009E', '', '', 'Private Message', 'Latin-1 Supplement', 'Control', 'PM'),
+('APC', '009F', '', '', 'Application Program Command', 'Latin-1 Supplement', 'Control', 'APC'),
+(' ', '00A0', ' ', ' ', 'Non-breaking space', 'Latin-1 Supplement', 'Whitespace', 'NBSP'),
+('¡', '00A1', '!', '', 'Inverted exclamation mark', 'Latin-1 Supplement', 'Punctuation', NULL),
+('¢', '00A2', 'C/', '', 'Cent sign', 'Latin-1 Supplement', 'Punctuation', NULL),
+('£', '00A3', 'PS', '', 'Pound sign', 'Latin-1 Supplement', 'Punctuation', NULL),
+('¤', '00A4', '$?', '', 'Currency sign', 'Latin-1 Supplement', 'Punctuation', NULL),
+('¥', '00A5', 'Y=', '', 'Yen sign', 'Latin-1 Supplement', 'Punctuation', NULL),
+('¦', '00A6', '|', '', 'Broken bar', 'Latin-1 Supplement', 'Punctuation', NULL),
+('§', '00A7', 'SS', '', 'Section sign', 'Latin-1 Supplement', 'Punctuation', NULL),
+('¨', '00A8', '"', '', 'Diaeresis', 'Latin-1 Supplement', 'Punctuation', NULL),
+('©', '00A9', '(c)', '', 'Copyright sign', 'Latin-1 Supplement', 'Punctuation', NULL),
+('ª', '00AA', 'a', '', 'Feminine Ordinal Indicator', 'Latin-1 Supplement', 'Punctuation', NULL),
+('«', '00AB', '<<', '', 'Left-pointing double angle quotation mark', 'Latin-1 Supplement', 'Punctuation', NULL),
+('¬', '00AC', '!', '', 'Not sign', 'Latin-1 Supplement', 'Punctuation', NULL),
+('­', '00AD', '', '', 'Soft hyphen', 'Latin-1 Supplement', 'Punctuation', 'SHY'),
+('®', '00AE', '(r)', '', 'Registered sign', 'Latin-1 Supplement', 'Punctuation', NULL),
+('¯', '00AF', '-', '', 'Macron', 'Latin-1 Supplement', 'Punctuation', NULL),
+('°', '00B0', 'deg', '', 'Degree symbol', 'Latin-1 Supplement', 'Punctuation', NULL),
+('±', '00B1', '+-', '', 'Plus-minus sign', 'Latin-1 Supplement', 'Punctuation', NULL),
+('²', '00B2', '2', '', 'Superscript two', 'Latin-1 Supplement', 'Punctuation', NULL),
+('³', '00B3', '3', '', 'Superscript three', 'Latin-1 Supplement', 'Punctuation', NULL),
+('´', '00B4', '''', '', 'Acute accent', 'Latin-1 Supplement', 'Punctuation', NULL),
+('µ', '00B5', 'u', '', 'Micro sign', 'Latin-1 Supplement', 'Punctuation', NULL),
+('¶', '00B6', 'P', '', 'Pilcrow sign', 'Latin-1 Supplement', 'Punctuation', NULL),
+('·', '00B7', '*', '', 'Middle dot', 'Latin-1 Supplement', 'Punctuation', NULL),
+('¸', '00B8', ',', '', 'Cedilla', 'Latin-1 Supplement', 'Punctuation', NULL),
+('¹', '00B9', '1', '', 'Superscript one', 'Latin-1 Supplement', 'Punctuation', NULL),
+('º', '00BA', 'o', '', 'Masculine ordinal indicator', 'Latin-1 Supplement', 'Punctuation', NULL),
+('»', '00BB', '>>', '', 'Right-pointing double-angle quotation mark', 'Latin-1 Supplement', 'Punctuation', NULL),
+('¼', '00BC', '1/4', '', 'Vulgar fraction one quarter', 'Latin-1 Supplement', 'Punctuation', NULL),
+('½', '00BD', '1/2', '', 'Vulgar fraction one half', 'Latin-1 Supplement', 'Punctuation', NULL),
+('¾', '00BE', '3/4', '', 'Vulgar fraction three quarters', 'Latin-1 Supplement', 'Punctuation', NULL),
+('¿', '00BF', '?', '', 'Inverted question mark', 'Latin-1 Supplement', 'Punctuation', NULL),
+('À', '00C0', 'A', 'a', 'Latin Capital Letter A with grave', 'Latin-1 Supplement', 'Latin letters', NULL),
+('Á', '00C1', 'A', 'a', 'Latin Capital letter A with acute', 'Latin-1 Supplement', 'Latin letters', NULL),
+('Â', '00C2', 'A', 'a', 'Latin Capital letter A with circumflex', 'Latin-1 Supplement', 'Latin letters', NULL),
+('Ã', '00C3', 'A', 'a', 'Latin Capital letter A with tilde', 'Latin-1 Supplement', 'Latin letters', NULL),
+('Ä', '00C4', 'A', 'a', 'Latin Capital letter A with diaeresis', 'Latin-1 Supplement', 'Latin letters', NULL),
+('Å', '00C5', 'A', 'a', 'Latin Capital letter A with ring above', 'Latin-1 Supplement', 'Latin letters', NULL),
+('Æ', '00C6', 'AE', 'ae', 'Latin Capital letter AE', 'Latin-1 Supplement', 'Latin letters', NULL),
+('Ç', '00C7', 'C', 'c', 'Latin Capital letter C with cedilla', 'Latin-1 Supplement', 'Latin letters', NULL),
+('È', '00C8', 'E', 'e', 'Latin Capital letter E with grave', 'Latin-1 Supplement', 'Latin letters', NULL),
+('É', '00C9', 'E', 'e', 'Latin Capital letter E with acute', 'Latin-1 Supplement', 'Latin letters', NULL),
+('Ê', '00CA', 'E', 'e', 'Latin Capital letter E with circumflex', 'Latin-1 Supplement', 'Latin letters', NULL),
+('Ë', '00CB', 'E', 'e', 'Latin Capital letter E with diaeresis', 'Latin-1 Supplement', 'Latin letters', NULL),
+('Ì', '00CC', 'I', 'i', 'Latin Capital letter I with grave', 'Latin-1 Supplement', 'Latin letters', NULL),
+('Í', '00CD', 'I', 'i', 'Latin Capital letter I with acute', 'Latin-1 Supplement', 'Latin letters', NULL),
+('Î', '00CE', 'I', 'i', 'Latin Capital letter I with circumflex', 'Latin-1 Supplement', 'Latin letters', NULL),
+('Ï', '00CF', 'I', 'i', 'Latin Capital letter I with diaeresis', 'Latin-1 Supplement', 'Latin letters', NULL),
+('Ð', '00D0', 'D', 'd', 'Latin Capital letter Eth', 'Latin-1 Supplement', 'Latin letters', NULL),
+('Ñ', '00D1', 'N', 'n', 'Latin Capital letter N with tilde', 'Latin-1 Supplement', 'Latin letters', NULL),
+('Ò', '00D2', 'O', 'o', 'Latin Capital letter O with grave', 'Latin-1 Supplement', 'Latin letters', NULL),
+('Ó', '00D3', 'O', 'o', 'Latin Capital letter O with acute', 'Latin-1 Supplement', 'Latin letters', NULL),
+('Ô', '00D4', 'O', 'o', 'Latin Capital letter O with circumflex', 'Latin-1 Supplement', 'Latin letters', NULL),
+('Õ', '00D5', 'O', 'o', 'Latin Capital letter O with tilde', 'Latin-1 Supplement', 'Latin letters', NULL),
+('Ö', '00D6', 'O', 'o', 'Latin Capital letter O with diaeresis', 'Latin-1 Supplement', 'Latin letters', NULL),
+('×', '00D7', 'x', '', 'Multiplication sign', 'Latin-1 Supplement', 'Punctuation', NULL),
+('Ø', '00D8', 'O', 'o', 'Latin Capital letter O with stroke', 'Latin-1 Supplement', 'Latin letters', NULL),
+('Ù', '00D9', 'U', 'u', 'Latin Capital letter U with grave', 'Latin-1 Supplement', 'Latin letters', NULL),
+('Ú', '00DA', 'U', 'u', 'Latin Capital letter U with acute', 'Latin-1 Supplement', 'Latin letters', NULL),
+('Û', '00DB', 'U', 'u', 'Latin Capital Letter U with circumflex', 'Latin-1 Supplement', 'Latin letters', NULL),
+('Ü', '00DC', 'U', 'u', 'Latin Capital Letter U with diaeresis', 'Latin-1 Supplement', 'Latin letters', NULL),
+('Ý', '00DD', 'Y', 'y', 'Latin Capital Letter Y with acute', 'Latin-1 Supplement', 'Latin letters', NULL),
+('Þ', '00DE', 'Th', 'th', 'Latin Capital Letter Thorn', 'Latin-1 Supplement', 'Latin letters', NULL),
+('ß', '00DF', 'ss', 'ss', 'Latin Small Letter sharp S', 'Latin-1 Supplement', 'Latin letters', NULL),
+('à', '00E0', 'a', 'a', 'Latin Small Letter A with grave', 'Latin-1 Supplement', 'Latin letters', NULL),
+('á', '00E1', 'a', 'a', 'Latin Small Letter A with acute', 'Latin-1 Supplement', 'Latin letters', NULL),
+('â', '00E2', 'a', 'a', 'Latin Small Letter A with circumflex', 'Latin-1 Supplement', 'Latin letters', NULL),
+('ã', '00E3', 'a', 'a', 'Latin Small Letter A with tilde', 'Latin-1 Supplement', 'Latin letters', NULL),
+('ä', '00E4', 'a', 'a', 'Latin Small Letter A with diaeresis', 'Latin-1 Supplement', 'Latin letters', NULL),
+('å', '00E5', 'a', 'a', 'Latin Small Letter A with ring above', 'Latin-1 Supplement', 'Latin letters', NULL),
+('æ', '00E6', 'ae', 'ae', 'Latin Small Letter AE', 'Latin-1 Supplement', 'Latin letters', NULL),
+('ç', '00E7', 'c', 'c', 'Latin Small Letter C with cedilla', 'Latin-1 Supplement', 'Latin letters', NULL),
+('è', '00E8', 'e', 'e', 'Latin Small Letter E with grave', 'Latin-1 Supplement', 'Latin letters', NULL),
+('é', '00E9', 'e', 'e', 'Latin Small Letter E with acute', 'Latin-1 Supplement', 'Latin letters', NULL),
+('ê', '00EA', 'e', 'e', 'Latin Small Letter E with circumflex', 'Latin-1 Supplement', 'Latin letters', NULL),
+('ë', '00EB', 'e', 'e', 'Latin Small Letter E with diaeresis', 'Latin-1 Supplement', 'Latin letters', NULL),
+('ì', '00EC', 'i', 'i', 'Latin Small Letter I with grave', 'Latin-1 Supplement', 'Latin letters', NULL),
+('í', '00ED', 'i', 'i', 'Latin Small Letter I with acute', 'Latin-1 Supplement', 'Latin letters', NULL),
+('î', '00EE', 'i', 'i', 'Latin Small Letter I with circumflex', 'Latin-1 Supplement', 'Latin letters', NULL),
+('ï', '00EF', 'i', 'i', 'Latin Small Letter I with diaeresis', 'Latin-1 Supplement', 'Latin letters', NULL),
+('ð', '00F0', 'd', 'd', 'Latin Small Letter Eth', 'Latin-1 Supplement', 'Latin letters', NULL),
+('ñ', '00F1', 'n', 'n', 'Latin Small Letter N with tilde', 'Latin-1 Supplement', 'Latin letters', NULL),
+('ò', '00F2', 'o', 'o', 'Latin Small Letter O with grave', 'Latin-1 Supplement', 'Latin letters', NULL),
+('ó', '00F3', 'o', 'o', 'Latin Small Letter O with acute', 'Latin-1 Supplement', 'Latin letters', NULL),
+('ô', '00F4', 'o', 'o', 'Latin Small Letter O with circumflex', 'Latin-1 Supplement', 'Latin letters', NULL),
+('õ', '00F5', 'o', 'o', 'Latin Small Letter O with tilde', 'Latin-1 Supplement', 'Latin letters', NULL),
+('ö', '00F6', 'o', 'o', 'Latin Small Letter O with diaeresis', 'Latin-1 Supplement', 'Latin letters', NULL),
+('÷', '00F7', '/', '', 'Division sign', 'Latin-1 Supplement', 'Punctuation', NULL),
+('ø', '00F8', 'o', 'o', 'Latin Small Letter O with stroke', 'Latin-1 Supplement', 'Latin letters', NULL),
+('ù', '00F9', 'u', 'u', 'Latin Small Letter U with grave', 'Latin-1 Supplement', 'Latin letters', NULL),
+('ú', '00FA', 'u', 'u', 'Latin Small Letter U with acute', 'Latin-1 Supplement', 'Latin letters', NULL),
+('û', '00FB', 'u', 'u', 'Latin Small Letter U with circumflex', 'Latin-1 Supplement', 'Latin letters', NULL),
+('ü', '00FC', 'u', 'u', 'Latin Small Letter U with diaeresis', 'Latin-1 Supplement', 'Latin letters', NULL),
+('ý', '00FD', 'y', 'y', 'Latin Small Letter Y with acute', 'Latin-1 Supplement', 'Latin letters', NULL),
+('þ', '00FE', 'th', 'th', 'Latin Small Letter Thorn', 'Latin-1 Supplement', 'Latin letters', NULL),
+('ÿ', '00FF', 'y', 'y', 'Latin Small Letter Y with diaeresis', 'Latin-1 Supplement', 'Latin letters', NULL),
+('Ā', '0100', 'A', 'a', 'Latin Capital letter A with macron', 'Latin Extended-A', 'Latin letters', NULL),
+('ā', '0101', 'a', 'a', 'Latin Small letter A with macron', 'Latin Extended-A', 'Latin letters', NULL),
+('Ă', '0102', 'A', 'a', 'Latin Capital letter A with breve', 'Latin Extended-A', 'Latin letters', NULL),
+('ă', '0103', 'a', 'a', 'Latin Small letter A with breve', 'Latin Extended-A', 'Latin letters', NULL),
+('Ą', '0104', 'A', 'a', 'Latin Capital letter A with ogonek', 'Latin Extended-A', 'Latin letters', NULL),
+('ą', '0105', 'a', 'a', 'Latin Small letter A with ogonek', 'Latin Extended-A', 'Latin letters', NULL),
+('Ć', '0106', 'C', 'c', 'Latin Capital letter C with acute', 'Latin Extended-A', 'Latin letters', NULL),
+('ć', '0107', 'c', 'c', 'Latin Small letter C with acute', 'Latin Extended-A', 'Latin letters', NULL),
+('Ĉ', '0108', 'C', 'c', 'Latin Capital letter C with circumflex', 'Latin Extended-A', 'Latin letters', NULL),
+('ĉ', '0109', 'c', 'c', 'Latin Small letter C with circumflex', 'Latin Extended-A', 'Latin letters', NULL),
+('Ċ', '010A', 'C', 'c', 'Latin Capital letter C with dot above', 'Latin Extended-A', 'Latin letters', NULL),
+('ċ', '010B', 'c', 'c', 'Latin Small letter C with dot above', 'Latin Extended-A', 'Latin letters', NULL),
+('Č', '010C', 'C', 'c', 'Latin Capital letter C with caron', 'Latin Extended-A', 'Latin letters', NULL),
+('č', '010D', 'c', 'c', 'Latin Small letter C with caron', 'Latin Extended-A', 'Latin letters', NULL),
+('Ď', '010E', 'D', 'd', 'Latin Capital letter D with caron', 'Latin Extended-A', 'Latin letters', NULL),
+('ď', '010F', 'd', 'd', 'Latin Small letter D with caron', 'Latin Extended-A', 'Latin letters', NULL),
+('Đ', '0110', 'D', 'd', 'Latin Capital letter D with stroke', 'Latin Extended-A', 'Latin letters', NULL),
+('đ', '0111', 'd', 'd', 'Latin Small letter D with stroke', 'Latin Extended-A', 'Latin letters', NULL),
+('Ē', '0112', 'E', 'e', 'Latin Capital letter E with macron', 'Latin Extended-A', 'Latin letters', NULL),
+('ē', '0113', 'e', 'e', 'Latin Small letter E with macron', 'Latin Extended-A', 'Latin letters', NULL),
+('Ĕ', '0114', 'E', 'e', 'Latin Capital letter E with breve', 'Latin Extended-A', 'Latin letters', NULL),
+('ĕ', '0115', 'e', 'e', 'Latin Small letter E with breve', 'Latin Extended-A', 'Latin letters', NULL),
+('Ė', '0116', 'E', 'e', 'Latin Capital letter E with dot above', 'Latin Extended-A', 'Latin letters', NULL),
+('ė', '0117', 'e', 'e', 'Latin Small letter E with dot above', 'Latin Extended-A', 'Latin letters', NULL),
+('Ę', '0118', 'E', 'e', 'Latin Capital letter E with ogonek', 'Latin Extended-A', 'Latin letters', NULL),
+('ę', '0119', 'e', 'e', 'Latin Small letter E with ogonek', 'Latin Extended-A', 'Latin letters', NULL),
+('Ě', '011A', 'E', 'e', 'Latin Capital letter E with caron', 'Latin Extended-A', 'Latin letters', NULL),
+('ě', '011B', 'e', 'e', 'Latin Small letter E with caron', 'Latin Extended-A', 'Latin letters', NULL),
+('Ĝ', '011C', 'G', 'g', 'Latin Capital letter G with circumflex', 'Latin Extended-A', 'Latin letters', NULL),
+('ĝ', '011D', 'g', 'g', 'Latin Small letter G with circumflex', 'Latin Extended-A', 'Latin letters', NULL),
+('Ğ', '011E', 'G', 'g', 'Latin Capital letter G with breve', 'Latin Extended-A', 'Latin letters', NULL),
+('ğ', '011F', 'g', 'g', 'Latin Small letter G with breve', 'Latin Extended-A', 'Latin letters', NULL),
+('Ġ', '0120', 'G', 'g', 'Latin Capital letter G with dot above', 'Latin Extended-A', 'Latin letters', NULL),
+('ġ', '0121', 'g', 'g', 'Latin Small letter G with dot above', 'Latin Extended-A', 'Latin letters', NULL),
+('Ģ', '0122', 'G', 'g', 'Latin Capital letter G with cedilla', 'Latin Extended-A', 'Latin letters', NULL),
+('ģ', '0123', 'g', 'g', 'Latin Small letter G with cedilla', 'Latin Extended-A', 'Latin letters', NULL),
+('Ĥ', '0124', 'H', 'h', 'Latin Capital letter H with circumflex', 'Latin Extended-A', 'Latin letters', NULL),
+('ĥ', '0125', 'h', 'h', 'Latin Small letter H with circumflex', 'Latin Extended-A', 'Latin letters', NULL),
+('Ħ', '0126', 'H', 'h', 'Latin Capital letter H with stroke', 'Latin Extended-A', 'Latin letters', NULL),
+('ħ', '0127', 'h', 'h', 'Latin Small letter H with stroke', 'Latin Extended-A', 'Latin letters', NULL),
+('Ĩ', '0128', 'I', 'i', 'Latin Capital letter I with tilde', 'Latin Extended-A', 'Latin letters', NULL),
+('ĩ', '0129', 'i', 'i', 'Latin Small letter I with tilde', 'Latin Extended-A', 'Latin letters', NULL),
+('Ī', '012A', 'I', 'i', 'Latin Capital letter I with macron', 'Latin Extended-A', 'Latin letters', NULL),
+('ī', '012B', 'i', 'i', 'Latin Small letter I with macron', 'Latin Extended-A', 'Latin letters', NULL),
+('Ĭ', '012C', 'I', 'i', 'Latin Capital letter I with breve', 'Latin Extended-A', 'Latin letters', NULL),
+('ĭ', '012D', 'i', 'i', 'Latin Small letter I with breve', 'Latin Extended-A', 'Latin letters', NULL),
+('Į', '012E', 'I', 'i', 'Latin Capital letter I with ogonek', 'Latin Extended-A', 'Latin letters', NULL),
+('į', '012F', 'i', 'i', 'Latin Small letter I with ogonek', 'Latin Extended-A', 'Latin letters', NULL),
+('İ', '0130', 'I', 'i', 'Latin Capital letter I with dot above', 'Latin Extended-A', 'Latin letters', NULL),
+('ı', '0131', 'i', 'i', 'Latin Small letter dotless I', 'Latin Extended-A', 'Latin letters', NULL),
+('Ĳ', '0132', 'IJ', 'ij', 'Latin Capital Ligature IJ', 'Latin Extended-A', 'Latin letters', NULL),
+('ĳ', '0133', 'ij', 'ij', 'Latin Small Ligature IJ', 'Latin Extended-A', 'Latin letters', NULL),
+('Ĵ', '0134', 'J', 'j', 'Latin Capital letter J with circumflex', 'Latin Extended-A', 'Latin letters', NULL),
+('ĵ', '0135', 'j', 'j', 'Latin Small letter J with circumflex', 'Latin Extended-A', 'Latin letters', NULL),
+('Ķ', '0136', 'K', 'k', 'Latin Capital letter K with cedilla', 'Latin Extended-A', 'Latin letters', NULL),
+('ķ', '0137', 'k', 'k', 'Latin Small letter K with cedilla', 'Latin Extended-A', 'Latin letters', NULL),
+('ĸ', '0138', 'k', 'k', 'Latin Small letter Kra', 'Latin Extended-A', 'Latin letters', NULL),
+('Ĺ', '0139', 'L', 'l', 'Latin Capital letter L with acute', 'Latin Extended-A', 'Latin letters', NULL),
+('ĺ', '013A', 'l', 'l', 'Latin Small letter L with acute', 'Latin Extended-A', 'Latin letters', NULL),
+('Ļ', '013B', 'L', 'l', 'Latin Capital letter L with cedilla', 'Latin Extended-A', 'Latin letters', NULL),
+('ļ', '013C', 'l', 'l', 'Latin Small letter L with cedilla', 'Latin Extended-A', 'Latin letters', NULL),
+('Ľ', '013D', 'L', 'l', 'Latin Capital letter L with caron', 'Latin Extended-A', 'Latin letters', NULL),
+('ľ', '013E', 'l', 'l', 'Latin Small letter L with caron', 'Latin Extended-A', 'Latin letters', NULL),
+('Ŀ', '013F', 'L', 'l', 'Latin Capital letter L with middle dot', 'Latin Extended-A', 'Latin letters', NULL),
+('ŀ', '0140', 'l', 'l', 'Latin Small letter L with middle dot', 'Latin Extended-A', 'Latin letters', NULL),
+('Ł', '0141', 'L', 'l', 'Latin Capital letter L with stroke', 'Latin Extended-A', 'Latin letters', NULL),
+('ł', '0142', 'l', 'l', 'Latin Small letter L with stroke', 'Latin Extended-A', 'Latin letters', NULL),
+('Ń', '0143', 'N', 'n', 'Latin Capital letter N with acute', 'Latin Extended-A', 'Latin letters', NULL),
+('ń', '0144', 'n', 'n', 'Latin Small letter N with acute', 'Latin Extended-A', 'Latin letters', NULL),
+('Ņ', '0145', 'N', 'n', 'Latin Capital letter N with cedilla', 'Latin Extended-A', 'Latin letters', NULL),
+('ņ', '0146', 'n', 'n', 'Latin Small letter N with cedilla', 'Latin Extended-A', 'Latin letters', NULL),
+('Ň', '0147', 'N', 'n', 'Latin Capital letter N with caron', 'Latin Extended-A', 'Latin letters', NULL),
+('ň', '0148', 'n', 'n', 'Latin Small letter N with caron', 'Latin Extended-A', 'Latin letters', NULL),
+-- Character 0149 is deprecated.
+('Ŋ', '014A', 'ng', 'ng', 'Latin Capital letter Eng', 'Latin Extended-A', 'Latin letters', NULL),
+('ŋ', '014B', 'NG', 'ng', 'Latin Small letter Eng', 'Latin Extended-A', 'Latin letters', NULL),
+('Ō', '014C', 'O', 'o', 'Latin Capital letter O with macron', 'Latin Extended-A', 'Latin letters', NULL),
+('ō', '014D', 'o', 'o', 'Latin Small letter O with macron', 'Latin Extended-A', 'Latin letters', NULL),
+('Ŏ', '014E', 'O', 'o', 'Latin Capital letter O with breve', 'Latin Extended-A', 'Latin letters', NULL),
+('ŏ', '014F', 'o', 'o', 'Latin Small letter O with breve', 'Latin Extended-A', 'Latin letters', NULL),
+('Ő', '0150', 'O', 'o', 'Latin Capital Letter O with double acute', 'Latin Extended-A', 'Latin letters', NULL),
+('ő', '0151', 'o', 'o', 'Latin Small Letter O with double acute', 'Latin Extended-A', 'Latin letters', NULL),
+('Œ', '0152', 'OE', 'oe', 'Latin Capital Ligature OE', 'Latin Extended-A', 'Latin letters', NULL),
+('œ', '0153', 'oe', 'oe', 'Latin Small Ligature OE', 'Latin Extended-A', 'Latin letters', NULL),
+('Ŕ', '0154', 'R', 'r', 'Latin Capital letter R with acute', 'Latin Extended-A', 'Latin letters', NULL),
+('ŕ', '0155', 'r', 'r', 'Latin Small letter R with acute', 'Latin Extended-A', 'Latin letters', NULL),
+('Ŗ', '0156', 'R', 'r', 'Latin Capital letter R with cedilla', 'Latin Extended-A', 'Latin letters', NULL),
+('ŗ', '0157', 'r', 'r', 'Latin Small letter R with cedilla', 'Latin Extended-A', 'Latin letters', NULL),
+('Ř', '0158', 'R', 'r', 'Latin Capital letter R with caron', 'Latin Extended-A', 'Latin letters', NULL),
+('ř', '0159', 'r', 'r', 'Latin Small letter R with caron', 'Latin Extended-A', 'Latin letters', NULL),
+('Ś', '015A', 'S', 's', 'Latin Capital letter S with acute', 'Latin Extended-A', 'Latin letters', NULL),
+('ś', '015B', 's', 's', 'Latin Small letter S with acute', 'Latin Extended-A', 'Latin letters', NULL),
+('Ŝ', '015C', 'S', 's', 'Latin Capital letter S with circumflex', 'Latin Extended-A', 'Latin letters', NULL),
+('ŝ', '015D', 's', 's', 'Latin Small letter S with circumflex', 'Latin Extended-A', 'Latin letters', NULL),
+('Ş', '015E', 'S', 's', 'Latin Capital letter S with cedilla', 'Latin Extended-A', 'Latin letters', NULL),
+('ş', '015F', 's', 's', 'Latin Small letter S with cedilla', 'Latin Extended-A', 'Latin letters', NULL),
+('Š', '0160', 'S', 's', 'Latin Capital letter S with caron', 'Latin Extended-A', 'Latin letters', NULL),
+('š', '0161', 's', 's', 'Latin Small letter S with caron', 'Latin Extended-A', 'Latin letters', NULL),
+('Ţ', '0162', 'T', 't', 'Latin Capital letter T with cedilla', 'Latin Extended-A', 'Latin letters', NULL),
+('ţ', '0163', 't', 't', 'Latin Small letter T with cedilla', 'Latin Extended-A', 'Latin letters', NULL),
+('Ť', '0164', 'T', 't', 'Latin Capital letter T with caron', 'Latin Extended-A', 'Latin letters', NULL),
+('ť', '0165', 't', 't', 'Latin Small letter T with caron', 'Latin Extended-A', 'Latin letters', NULL),
+('Ŧ', '0166', 'T', 't', 'Latin Capital letter T with stroke', 'Latin Extended-A', 'Latin letters', NULL),
+('ŧ', '0167', 't', 't', 'Latin Small letter T with stroke', 'Latin Extended-A', 'Latin letters', NULL),
+('Ũ', '0168', 'U', 'u', 'Latin Capital letter U with tilde', 'Latin Extended-A', 'Latin letters', NULL),
+('ũ', '0169', 'u', 'u', 'Latin Small letter U with tilde', 'Latin Extended-A', 'Latin letters', NULL),
+('Ū', '016A', 'U', 'u', 'Latin Capital letter U with macron', 'Latin Extended-A', 'Latin letters', NULL),
+('ū', '016B', 'u', 'u', 'Latin Small letter U with macron', 'Latin Extended-A', 'Latin letters', NULL),
+('Ŭ', '016C', 'U', 'u', 'Latin Capital letter U with breve', 'Latin Extended-A', 'Latin letters', NULL),
+('ŭ', '016D', 'u', 'u', 'Latin Small letter U with breve', 'Latin Extended-A', 'Latin letters', NULL),
+('Ů', '016E', 'U', 'u', 'Latin Capital letter U with ring above', 'Latin Extended-A', 'Latin letters', NULL),
+('ů', '016F', 'u', 'u', 'Latin Small letter U with ring above', 'Latin Extended-A', 'Latin letters', NULL),
+('Ű', '0170', 'U', 'u', 'Latin Capital Letter U with double acute', 'Latin Extended-A', 'Latin letters', NULL),
+('ű', '0171', 'u', 'u', 'Latin Small Letter U with double acute', 'Latin Extended-A', 'Latin letters', NULL),
+('Ų', '0172', 'U', 'u', 'Latin Capital letter U with ogonek', 'Latin Extended-A', 'Latin letters', NULL),
+('ų', '0173', 'u', 'u', 'Latin Small letter U with ogonek', 'Latin Extended-A', 'Latin letters', NULL),
+('Ŵ', '0174', 'W', 'w', 'Latin Capital letter W with circumflex', 'Latin Extended-A', 'Latin letters', NULL),
+('ŵ', '0175', 'w', 'w', 'Latin Small letter W with circumflex', 'Latin Extended-A', 'Latin letters', NULL),
+('Ŷ', '0176', 'Y', 'y', 'Latin Capital letter Y with circumflex', 'Latin Extended-A', 'Latin letters', NULL),
+('ŷ', '0177', 'y', 'y', 'Latin Small letter Y with circumflex', 'Latin Extended-A', 'Latin letters', NULL),
+('Ÿ', '0178', 'Y', 'y', 'Latin Capital letter Y with diaeresis', 'Latin Extended-A', 'Latin letters', NULL),
+('Ź', '0179', 'Z', 'z', 'Latin Capital letter Z with acute', 'Latin Extended-A', 'Latin letters', NULL),
+('ź', '017A', 'z', 'z', 'Latin Small letter Z with acute', 'Latin Extended-A', 'Latin letters', NULL),
+('Ż', '017B', 'Z', 'z', 'Latin Capital letter Z with dot above', 'Latin Extended-A', 'Latin letters', NULL),
+('ż', '017C', 'z', 'z', 'Latin Small letter Z with dot above', 'Latin Extended-A', 'Latin letters', NULL),
+('Ž', '017D', 'Z', 'z', 'Latin Capital letter Z with caron', 'Latin Extended-A', 'Latin letters', NULL),
+('ž', '017E', 'z', 'z', 'Latin Small letter Z with caron', 'Latin Extended-A', 'Latin letters', NULL),
+('ſ', '017F', 's', 's', 'Latin Small letter long S', 'Latin Extended-A', 'Latin letters', NULL),
+('ƀ', '0180', 'b', 'b', 'Latin Small Letter B with Stroke', 'Latin Extended-B', 'Non-European Latin letters', NULL),
+('Ɓ', '0181', 'B', 'b', 'Latin Capital Letter B with Hook', 'Latin Extended-B', 'Non-European Latin letters', NULL),
+('Ƃ', '0182', 'B', 'b', 'Latin Capital Letter B with Top Bar', 'Latin Extended-B', 'Non-European Latin letters', NULL),
+('ƃ', '0183', 'b', 'b', 'Latin Small Letter B with Top Bar', 'Latin Extended-B', 'Non-European Latin letters', NULL),
+('Ƅ', '0184', '6', '6', 'Latin Capital Letter Tone Six', 'Latin Extended-B', 'Non-European Latin letters', NULL),
+('ƅ', '0185', '6', '6', 'Latin Small Letter Tone Six', 'Latin Extended-B', 'Non-European Latin letters', NULL),
+('Ɔ', '0186', 'O', 'o', 'Latin Capital Letter Open O', 'Latin Extended-B', 'Non-European Latin letters', NULL),
+('Ƈ', '0187', 'C', 'c', 'Latin Capital Letter C with Hook', 'Latin Extended-B', 'Non-European Latin letters', NULL),
+('ƈ', '0188', 'c', 'c', 'Latin Small Letter C with Hook', 'Latin Extended-B', 'Non-European Latin letters', NULL),
+('Ɖ', '0189', 'D', 'd', 'Latin Capital Letter African D', 'Latin Extended-B', 'Non-European Latin letters', NULL),
+('Ɗ', '018A', 'D', 'd', 'Latin Capital Letter D with Hook', 'Latin Extended-B', 'Non-European Latin letters', NULL),
+('Ƌ', '018B', 'D', 'd', 'Latin Capital Letter D with Top Bar', 'Latin Extended-B', 'Non-European Latin letters', NULL),
+('ƌ', '018C', 'd', 'd', 'Latin Small Letter D with Top Bar', 'Latin Extended-B', 'Non-European Latin letters', NULL),
+('ƍ', '018D', 'd', 'd', 'Latin Small Letter Turned Delta', 'Latin Extended-B', 'Non-European Latin letters', NULL),
+('Ǝ', '018E', '3', '3', 'Latin Capital Letter Reversed E', 'Latin Extended-B', 'Non-European Latin letters', NULL),
+('Ə', '018F', '@', '', 'Latin Capital Letter Schwa', 'Latin Extended-B', 'Non-European Latin letters', NULL),
+('Ɛ', '0190', 'E', 'e', 'Latin Capital Letter Open E', 'Latin Extended-B', 'Non-European Latin letters', NULL),
+('Ƒ', '0191', 'F', 'f', 'Latin Capital Letter F with Hook', 'Latin Extended-B', 'Non-European Latin letters', NULL),
+('ƒ', '0192', 'f', 'f', 'Latin Small Letter F with Hook', 'Latin Extended-B', 'Non-European Latin letters', NULL),
+('Ɠ', '0193', 'G', 'g', 'Latin Capital Letter G with Hook', 'Latin Extended-B', 'Non-European Latin letters', NULL),
+('Ɣ', '0194', 'G', 'g', 'Latin Capital Letter Gamma', 'Latin Extended-B', 'Non-European Latin letters', NULL),
+('ƕ', '0195', 'hv', 'hv', 'Latin Small Letter HV', 'Latin Extended-B', 'Non-European Latin letters', NULL),
+('Ɩ', '0196', 'I', 'i', 'Latin Capital Letter Iota', 'Latin Extended-B', 'Non-European Latin letters', NULL),
+('Ɨ', '0197', 'I', 'i', 'Latin Capital Letter I with Stroke', 'Latin Extended-B', 'Non-European Latin letters', NULL),
+('Ƙ', '0198', 'K', 'k', 'Latin Capital Letter K with Hook', 'Latin Extended-B', 'Non-European Latin letters', NULL),
+('ƙ', '0199', 'k', 'k', 'Latin Small Letter K with Hook', 'Latin Extended-B', 'Non-European Latin letters', NULL),
+('ƚ', '019A', 'l', 'l', 'Latin Small Letter L with Bar', 'Latin Extended-B', 'Non-European Latin letters', NULL),
+('ƛ', '019B', 'l', 'l', 'Latin Small Letter Lambda with Stroke', 'Latin Extended-B', 'Non-European Latin letters', NULL),
+('Ɯ', '019C', 'W', 'w', 'Latin Capital Letter Turned M', 'Latin Extended-B', 'Non-European Latin letters', NULL),
+('Ɲ', '019D', 'N', 'n', 'Latin Capital Letter N with Left Hook', 'Latin Extended-B', 'Non-European Latin letters', NULL),
+('ƞ', '019E', 'n', 'n', 'Latin Small Letter N with Long Right Leg', 'Latin Extended-B', 'Non-European Latin letters', NULL),
+('Ɵ', '019F', 'O', 'o', 'Latin Capital Letter O with Middle Tilde', 'Latin Extended-B', 'Non-European Latin letters', NULL),
+('Ơ', '01A0', 'O', 'o', 'Latin Capital Letter O with Horn', 'Latin Extended-B', 'Non-European Latin letters', NULL),
+('ơ', '01A1', 'o', 'o', 'Latin Small Letter O with Horn', 'Latin Extended-B', 'Non-European Latin letters', NULL),
+('Ƣ', '01A2', 'OI', 'oi', 'Latin Capital Letter OI (= Latin Capital Letter Gha)', 'Latin Extended-B', 'Non-European Latin letters', NULL),
+('ƣ', '01A3', 'oi', 'oi', 'Latin Small Letter OI (= Latin Small Letter Gha)', 'Latin Extended-B', 'Non-European Latin letters', NULL),
+('Ƥ', '01A4', 'P', 'p', 'Latin Capital Letter P with Hook', 'Latin Extended-B', 'Non-European Latin letters', NULL),
+('ƥ', '01A5', 'p', 'p', 'Latin Small Letter P with Hook', 'Latin Extended-B', 'Non-European Latin letters', NULL),
+('Ʀ', '01A6', 'YR', 'yr', 'Latin Letter YR', 'Latin Extended-B', 'Non-European Latin letters', NULL),
+('Ƨ', '01A7', '2', '2', 'Latin Capital Letter Tone Two', 'Latin Extended-B', 'Non-European Latin letters', NULL),
+('ƨ', '01A8', '2', '2', 'Latin Small Letter Tone Two', 'Latin Extended-B', 'Non-European Latin letters', NULL),
+('Ʃ', '01A9', 'SH', 'sh', 'Latin Capital Letter Esh', 'Latin Extended-B', 'Non-European Latin letters', NULL),
+('ƪ', '01AA', 'sh', 'sh', 'Latin Letter Reversed Esh Loop', 'Latin Extended-B', 'Non-European Latin letters', NULL),
+('ƫ', '01AB', 't', 't', 'Latin Small Letter T with Palatal Hook', 'Latin Extended-B', 'Non-European Latin letters', NULL),
+('Ƭ', '01AC', 'T', 't', 'Latin Capital Letter T with Hook', 'Latin Extended-B', 'Non-European Latin letters', NULL),
+('ƭ', '01AD', 't', 't', 'Latin Small Letter T with Hook', 'Latin Extended-B', 'Non-European Latin letters', NULL),
+('Ʈ', '01AE', 'T', 't', 'Latin Capital Letter T with Retroflex Hook', 'Latin Extended-B', 'Non-European Latin letters', NULL),
+('Ư', '01AF', 'U', 'u', 'Latin Capital Letter U with Horn', 'Latin Extended-B', 'Non-European Latin letters', NULL),
+('ư', '01B0', 'u', 'u', 'Latin Small Letter U with Horn', 'Latin Extended-B', 'Non-European Latin letters', NULL),
+('Ʊ', '01B1', 'Y', 'y', 'Latin Capital Letter Upsilon', 'Latin Extended-B', 'Non-European Latin letters', NULL),
+('Ʋ', '01B2', 'V', 'v', 'Latin Capital Letter V with Hook', 'Latin Extended-B', 'Non-European Latin letters', NULL),
+('Ƴ', '01B3', 'Y', 'y', 'Latin Capital Letter Y with Hook', 'Latin Extended-B', 'Non-European Latin letters', NULL),
+('ƴ', '01B4', 'y', 'y', 'Latin Small Letter Y with Hook', 'Latin Extended-B', 'Non-European Latin letters', NULL),
+('Ƶ', '01B5', 'Z', 'z', 'Latin Capital Letter Z with Stroke', 'Latin Extended-B', 'Non-European Latin letters', NULL),
+('ƶ', '01B6', 'z', 'z', 'Latin Small Letter Z with Stroke', 'Latin Extended-B', 'Non-European Latin letters', NULL),
+('Ʒ', '01B7', 'ZH', 'zh', 'Latin Capital Letter Ezh', 'Latin Extended-B', 'Non-European Latin letters', NULL),
+('Ƹ', '01B8', 'ZH', 'zh', 'Latin Capital Letter Ezh Reversed', 'Latin Extended-B', 'Non-European Latin letters', NULL),
+('ƹ', '01B9', 'zh', 'zh', 'Latin Small Letter Ezh Reversed', 'Latin Extended-B', 'Non-European Latin letters', NULL),
+('ƺ', '01BA', 'zh', 'zh', 'Latin Small Letter Ezh with Tail', 'Latin Extended-B', 'Non-European Latin letters', NULL),
+('ƻ', '01BB', '2', '2', 'Latin Letter Two with Stroke', 'Latin Extended-B', 'Non-European Latin letters', NULL),
+('Ƽ', '01BC', '5', '5', 'Latin Capital Letter Tone Five', 'Latin Extended-B', 'Non-European Latin letters', NULL),
+('ƽ', '01BD', '5', '5', 'Latin Small Letter Tone Five', 'Latin Extended-B', 'Non-European Latin letters', NULL),
+('ƾ', '01BE', 'ts', 'ts', 'Latin Letter Inverted Glottal Stop with Stroke', 'Latin Extended-B', 'Non-European Latin letters', NULL),
+('ƿ', '01BF', 'w', 'w', 'Latin Letter Wynn', 'Latin Extended-B', 'Non-European Latin letters', NULL),
+('ǀ', '01C0', '|', '', 'Latin Letter Dental Click', 'Latin Extended-B', 'African', NULL),
+('ǁ', '01C1', '||', '', 'Latin Letter Lateral Click', 'Latin Extended-B', 'African', NULL),
+('ǂ', '01C2', '|=', '', 'Latin Letter Alveolar Click', 'Latin Extended-B', 'African', NULL),
+('ǃ', '01C3', '!', '', 'Latin Letter Retroflex Click', 'Latin Extended-B', 'African', NULL),
+('Ǆ', '01C4', 'DZ', 'dz', 'Latin Capital Letter DZ with Caron', 'Latin Extended-B', 'Latin letters', NULL),
+('ǅ', '01C5', 'Dz', 'dz', 'Latin Capital Letter D with Small Letter Z with Caron', 'Latin Extended-B', 'Latin letters', NULL),
+('ǆ', '01C6', 'dz', 'dz', 'Latin Small Letter DZ with Caron', 'Latin Extended-B', 'Latin letters', NULL),
+('Ǉ', '01C7', 'LJ', 'lj', 'Latin Capital Letter LJ', 'Latin Extended-B', 'Latin letters', NULL),
+('ǈ', '01C8', 'Lj', 'lj', 'Latin Capital Letter L with Small Letter J', 'Latin Extended-B', 'Latin letters', NULL),
+('ǉ', '01C9', 'lj', 'lj', 'Latin Small Letter LJ', 'Latin Extended-B', 'Latin letters', NULL),
+('Ǌ', '01CA', 'NJ', 'nj', 'Latin Capital Letter NJ', 'Latin Extended-B', 'Latin letters', NULL),
+('ǋ', '01CB', 'Nj', 'nj', 'Latin Capital Letter N with Small Letter J', 'Latin Extended-B', 'Latin letters', NULL),
+('ǌ', '01CC', 'nj', 'nj', 'Latin Small Letter NJ', 'Latin Extended-B', 'Latin letters', NULL),
+('Ǎ', '01CD', 'A', 'a', 'Latin Capital Letter A with Caron', 'Latin Extended-B', 'Pinyin', NULL),
+('ǎ', '01CE', 'a', 'a', 'Latin Small Letter A with Caron', 'Latin Extended-B', 'Pinyin', NULL),
+('Ǐ', '01CF', 'I', 'i', 'Latin Capital Letter I with Caron', 'Latin Extended-B', 'Pinyin', NULL),
+('ǐ', '01D0', 'i', 'i', 'Latin Small Letter I with Caron', 'Latin Extended-B', 'Pinyin', NULL),
+('Ǒ', '01D1', 'O', 'o', 'Latin Capital Letter O with Caron', 'Latin Extended-B', 'Pinyin', NULL),
+('ǒ', '01D2', 'o', 'o', 'Latin Small Letter O with Caron', 'Latin Extended-B', 'Pinyin', NULL),
+('Ǔ', '01D3', 'U', 'u', 'Latin Capital Letter U with Caron', 'Latin Extended-B', 'Pinyin', NULL),
+('ǔ', '01D4', 'u', 'u', 'Latin Small Letter U with Caron', 'Latin Extended-B', 'Pinyin', NULL),
+('Ǖ', '01D5', 'U', 'u', 'Latin Capital Letter U with Diaeresis and Macron', 'Latin Extended-B', 'Pinyin', NULL),
+('ǖ', '01D6', 'u', 'u', 'Latin Small Letter U with Diaeresis and Macron', 'Latin Extended-B', 'Pinyin', NULL),
+('Ǘ', '01D7', 'U', 'u', 'Latin Capital Letter U with Diaeresis and Acute', 'Latin Extended-B', 'Pinyin', NULL),
+('ǘ', '01D8', 'u', 'u', 'Latin Small Letter U with Diaeresis and Acute', 'Latin Extended-B', 'Pinyin', NULL),
+('Ǚ', '01D9', 'U', 'u', 'Latin Capital Letter U with Diaeresis and Caron', 'Latin Extended-B', 'Pinyin', NULL),
+('ǚ', '01DA', 'u', 'u', 'Latin Small Letter U with Diaeresis and Caron', 'Latin Extended-B', 'Pinyin', NULL),
+('Ǜ', '01DB', 'U', 'u', 'Latin Capital Letter U with Diaeresis and Grave', 'Latin Extended-B', 'Pinyin', NULL),
+('ǜ', '01DC', 'u', 'u', 'Latin Small Letter U with Diaeresis and Grave', 'Latin Extended-B', 'Pinyin', NULL),
+('ǝ', '01DD', '@', '', 'Latin Small Letter Turned E', 'Latin Extended-B', 'Phonetic', NULL),
+('Ǟ', '01DE', 'A', 'a', 'Latin Capital Letter A with Diaeresis and Macron', 'Latin Extended-B', 'Phonetic', NULL),
+('ǟ', '01DF', 'a', 'a', 'Latin Small Letter A with Diaeresis and Macron', 'Latin Extended-B', 'Phonetic', NULL),
+('Ǡ', '01E0', 'A', 'a', 'Latin Capital Letter A with Dot Above and Macron', 'Latin Extended-B', 'Phonetic', NULL),
+('ǡ', '01E1', 'a', 'a', 'Latin Small Letter A with Dot Above and Macron', 'Latin Extended-B', 'Phonetic', NULL),
+('Ǣ', '01E2', 'AE', 'ae', 'Latin Capital Letter AE with Macron', 'Latin Extended-B', 'Phonetic', NULL),
+('ǣ', '01E3', 'ae', 'ae', 'Latin Small Letter AE with Macron', 'Latin Extended-B', 'Phonetic', NULL),
+('Ǥ', '01E4', 'G', 'g', 'Latin Capital Letter G with Stroke', 'Latin Extended-B', 'Phonetic', NULL),
+('ǥ', '01E5', 'g', 'g', 'Latin Small Letter G with Stroke', 'Latin Extended-B', 'Phonetic', NULL),
+('Ǧ', '01E6', 'G', 'g', 'Latin Capital Letter G with Caron', 'Latin Extended-B', 'Phonetic', NULL),
+('ǧ', '01E7', 'g', 'g', 'Latin Small Letter G with Caron', 'Latin Extended-B', 'Phonetic', NULL),
+('Ǩ', '01E8', 'K', 'k', 'Latin Capital Letter K with Caron', 'Latin Extended-B', 'Phonetic', NULL),
+('ǩ', '01E9', 'k', 'k', 'Latin Small Letter K with Caron', 'Latin Extended-B', 'Phonetic', NULL),
+('Ǫ', '01EA', 'O', 'o', 'Latin Capital Letter O with Ogonek', 'Latin Extended-B', 'Phonetic', NULL),
+('ǫ', '01EB', 'o', 'o', 'Latin Small Letter O with Ogonek', 'Latin Extended-B', 'Phonetic', NULL),
+('Ǭ', '01EC', 'O', 'o', 'Latin Capital Letter O with Ogonek and Macron', 'Latin Extended-B', 'Phonetic', NULL),
+('ǭ', '01ED', 'o', 'o', 'Latin Small Letter O with Ogonek and Macron', 'Latin Extended-B', 'Phonetic', NULL),
+('Ǯ', '01EE', 'ZH', 'zh', 'Latin Capital Letter Ezh with Caron', 'Latin Extended-B', 'Phonetic', NULL),
+('ǯ', '01EF', 'zh', 'zh', 'Latin Small Letter Ezh with Caron', 'Latin Extended-B', 'Phonetic', NULL),
+('ǰ', '01F0', 'j', 'j', 'Latin Small Letter J with Caron', 'Latin Extended-B', 'Phonetic', NULL),
+('Ǳ', '01F1', 'DZ', 'dz', 'Latin Capital Letter DZ', 'Latin Extended-B', 'Phonetic', NULL),
+('ǲ', '01F2', 'Dz', 'dz', 'Latin Capital Letter D with Small Letter Z', 'Latin Extended-B', 'Phonetic', NULL),
+('ǳ', '01F3', 'dz', 'dz', 'Latin Small Letter DZ', 'Latin Extended-B', 'Phonetic', NULL),
+('Ǵ', '01F4', 'G', 'g', 'Latin Capital Letter G with Acute', 'Latin Extended-B', 'Phonetic', NULL),
+('ǵ', '01F5', 'g', 'g', 'Latin Small Letter G with Acute', 'Latin Extended-B', 'Phonetic', NULL),
+('Ƕ', '01F6', 'HV', 'hv', 'Latin Capital Letter Hwair', 'Latin Extended-B', 'Phonetic', NULL),
+('Ƿ', '01F7', 'W', 'w', 'Latin Capital Letter Wynn', 'Latin Extended-B', 'Phonetic', NULL),
+('Ǹ', '01F8', 'N', 'n', 'Latin Capital Letter N with Grave', 'Latin Extended-B', 'Phonetic', NULL),
+('ǹ', '01F9', 'n', 'n', 'Latin Small Letter N with Grave', 'Latin Extended-B', 'Phonetic', NULL),
+('Ǻ', '01FA', 'A', 'a', 'Latin Capital Letter A with Ring Above and Acute', 'Latin Extended-B', 'Phonetic', NULL),
+('ǻ', '01FB', 'a', 'a', 'Latin Small Letter A with Ring Above and Acute', 'Latin Extended-B', 'Phonetic', NULL),
+('Ǽ', '01FC', 'AE', 'ae', 'Latin Capital Letter AE with Acute', 'Latin Extended-B', 'Phonetic', NULL),
+('ǽ', '01FD', 'ae', 'ae', 'Latin Small Letter AE with Acute', 'Latin Extended-B', 'Phonetic', NULL),
+('Ǿ', '01FE', 'O', 'o', 'Latin Capital Letter O with Stroke and Acute', 'Latin Extended-B', 'Phonetic', NULL),
+('ǿ', '01FF', 'o', 'o', 'Latin Small Letter O with Stroke and Acute', 'Latin Extended-B', 'Phonetic', NULL),
+('Ȁ', '0200', 'A', 'a', 'Latin Capital Letter A with Double Grave', 'Latin Extended-B', 'Latin letters', NULL),
+('ȁ', '0201', 'a', 'a', 'Latin Small Letter A with Double Grave', 'Latin Extended-B', 'Latin letters', NULL),
+('Ȃ', '0202', 'A', 'a', 'Latin Capital Letter A with Inverted Breve', 'Latin Extended-B', 'Latin letters', NULL),
+('ȃ', '0203', 'a', 'a', 'Latin Small Letter A with Inverted Breve', 'Latin Extended-B', 'Latin letters', NULL),
+('Ȅ', '0204', 'E', 'e', 'Latin Capital Letter E with Double Grave', 'Latin Extended-B', 'Latin letters', NULL),
+('ȅ', '0205', 'e', 'e', 'Latin Small Letter E with Double Grave', 'Latin Extended-B', 'Latin letters', NULL),
+('Ȇ', '0206', 'E', 'e', 'Latin Capital Letter E with Inverted Breve', 'Latin Extended-B', 'Latin letters', NULL),
+('ȇ', '0207', 'e', 'e', 'Latin Small Letter E with Inverted Breve', 'Latin Extended-B', 'Latin letters', NULL),
+('Ȉ', '0208', 'I', 'i', 'Latin Capital Letter I with Double Grave', 'Latin Extended-B', 'Latin letters', NULL),
+('ȉ', '0209', 'i', 'i', 'Latin Small Letter I with Double Grave', 'Latin Extended-B', 'Latin letters', NULL),
+('Ȋ', '020A', 'I', 'i', 'Latin Capital Letter I with Inverted Breve', 'Latin Extended-B', 'Latin letters', NULL),
+('ȋ', '020B', 'i', 'i', 'Latin Small Letter I with Inverted Breve', 'Latin Extended-B', 'Latin letters', NULL),
+('Ȍ', '020C', 'O', 'o', 'Latin Capital Letter O with Double Grave', 'Latin Extended-B', 'Latin letters', NULL),
+('ȍ', '020D', 'o', 'o', 'Latin Small Letter O with Double Grave', 'Latin Extended-B', 'Latin letters', NULL),
+('Ȏ', '020E', 'O', 'o', 'Latin Capital Letter O with Inverted Breve', 'Latin Extended-B', 'Latin letters', NULL),
+('ȏ', '020F', 'o', 'o', 'Latin Small Letter O with Inverted Breve', 'Latin Extended-B', 'Latin letters', NULL),
+('Ȑ', '0210', 'R', 'r', 'Latin Capital Letter R with Double Grave', 'Latin Extended-B', 'Latin letters', NULL),
+('ȑ', '0211', 'r', 'r', 'Latin Small Letter R with Double Grave', 'Latin Extended-B', 'Latin letters', NULL),
+('Ȓ', '0212', 'R', 'r', 'Latin Capital Letter R with Inverted Breve', 'Latin Extended-B', 'Latin letters', NULL),
+('ȓ', '0213', 'r', 'r', 'Latin Small Letter R with Inverted Breve', 'Latin Extended-B', 'Latin letters', NULL),
+('Ȕ', '0214', 'U', 'u', 'Latin Capital Letter U with Double Grave', 'Latin Extended-B', 'Latin letters', NULL),
+('ȕ', '0215', 'u', 'u', 'Latin Small Letter U with Double Grave', 'Latin Extended-B', 'Latin letters', NULL),
+('Ȗ', '0216', 'U', 'u', 'Latin Capital Letter U with Inverted Breve', 'Latin Extended-B', 'Latin letters', NULL),
+('ȗ', '0217', 'u', 'u', 'Latin Small Letter U with Inverted Breve', 'Latin Extended-B', 'Latin letters', NULL),
+('Ș', '0218', 'S', 's', 'Latin Capital Letter S with Comma Below', 'Latin Extended-B', 'Latin letters', NULL),
+('ș', '0219', 's', 's', 'Latin Small Letter S with Comma Below', 'Latin Extended-B', 'Latin letters', NULL),
+('Ț', '021A', 'T', 't', 'Latin Capital Letter T with Comma Below', 'Latin Extended-B', 'Latin letters', NULL),
+('ț', '021B', 't', 't', 'Latin Small Letter T with Comma Below', 'Latin Extended-B', 'Latin letters', NULL),
+('Ȝ', '021C', 'Y', 'y', 'Latin Capital Letter Yogh', 'Latin Extended-B', 'Miscellaneous', NULL),
+('ȝ', '021D', 'y', 'y', 'Latin Small Letter Yogh', 'Latin Extended-B', 'Miscellaneous', NULL),
+('Ȟ', '021E', 'H', 'h', 'Latin Capital Letter H with Caron', 'Latin Extended-B', 'Miscellaneous', NULL),
+('ȟ', '021F', 'h', 'h', 'Latin Small Letter H with Caron', 'Latin Extended-B', 'Miscellaneous', NULL),
+('Ƞ', '0220', 'N', 'n', 'Latin Capital Letter N with Long Right Leg', 'Latin Extended-B', 'Miscellaneous', NULL),
+('ȡ', '0221', 'd', 'd', 'Latin Small Letter D with Curl', 'Latin Extended-B', 'Miscellaneous', NULL),
+('Ȣ', '0222', 'OU', 'ou', 'Latin Capital Letter OU', 'Latin Extended-B', 'Miscellaneous', NULL),
+('ȣ', '0223', 'ou', 'ou', 'Latin Small Letter OU', 'Latin Extended-B', 'Miscellaneous', NULL),
+('Ȥ', '0224', 'Z', 'z', 'Latin Capital Letter Z with Hook', 'Latin Extended-B', 'Miscellaneous', NULL),
+('ȥ', '0225', 'z', 'z', 'Latin Small Letter Z with Hook', 'Latin Extended-B', 'Miscellaneous', NULL),
+('Ȧ', '0226', 'A', 'a', 'Latin Capital Letter A with Dot Above', 'Latin Extended-B', 'Miscellaneous', NULL),
+('ȧ', '0227', 'a', 'a', 'Latin Small Letter A with Dot Above', 'Latin Extended-B', 'Miscellaneous', NULL),
+('Ȩ', '0228', 'E', 'e', 'Latin Capital Letter E with Cedilla', 'Latin Extended-B', 'Miscellaneous', NULL),
+('ȩ', '0229', 'e', 'e', 'Latin Small Letter E with Cedilla', 'Latin Extended-B', 'Miscellaneous', NULL),
+('Ȫ', '022A', 'O', 'o', 'Latin Capital Letter O with Diaeresis and Macron', 'Latin Extended-B', 'Miscellaneous', NULL),
+('ȫ', '022B', 'o', 'o', 'Latin Small Letter O with Diaeresis and Macron', 'Latin Extended-B', 'Miscellaneous', NULL),
+('Ȭ', '022C', 'O', 'o', 'Latin Capital Letter O with Tilde and Macron', 'Latin Extended-B', 'Miscellaneous', NULL),
+('ȭ', '022D', 'o', 'o', 'Latin Small Letter O with Tilde and Macron', 'Latin Extended-B', 'Miscellaneous', NULL),
+('Ȯ', '022E', 'O', 'o', 'Latin Capital Letter O with Dot Above', 'Latin Extended-B', 'Miscellaneous', NULL),
+('ȯ', '022F', 'o', 'o', 'Latin Small Letter O with Dot Above', 'Latin Extended-B', 'Miscellaneous', NULL),
+('Ȱ', '0230', 'O', 'o', 'Latin Capital Letter O with Dot Above and Macron', 'Latin Extended-B', 'Miscellaneous', NULL),
+('ȱ', '0231', 'o', 'o', 'Latin Small Letter O with Dot Above and Macron', 'Latin Extended-B', 'Miscellaneous', NULL),
+('Ȳ', '0232', 'Y', 'y', 'Latin Capital Letter Y with Macron', 'Latin Extended-B', 'Miscellaneous', NULL),
+('ȳ', '0233', 'y', 'y', 'Latin Small Letter Y with Macron', 'Latin Extended-B', 'Miscellaneous', NULL),
+('ȴ', '0234', 'l', 'l', 'Latin Small Letter L with Curl', 'Latin Extended-B', 'Miscellaneous', NULL),
+('ȵ', '0235', 'n', 'n', 'Latin Small Letter N with Curl', 'Latin Extended-B', 'Miscellaneous', NULL),
+('ȶ', '0236', 't', 't', 'Latin Small Letter T with Curl', 'Latin Extended-B', 'Miscellaneous', NULL),
+('ȷ', '0237', 'j', 'j', 'Latin Small Letter Dotless J', 'Latin Extended-B', 'Miscellaneous', NULL),
+('ȸ', '0238', 'db', 'db', 'Latin Small Letter DB Digraph', 'Latin Extended-B', 'Miscellaneous', NULL),
+('ȹ', '0239', 'qp', 'qp', 'Latin Small Letter QP Digraph', 'Latin Extended-B', 'Miscellaneous', NULL),
+('Ⱥ', '023A', 'A', 'a', 'Latin Capital Letter A with Stroke', 'Latin Extended-B', 'Miscellaneous', NULL),
+('Ȼ', '023B', 'C', 'c', 'Latin Capital Letter C with Stroke', 'Latin Extended-B', 'Miscellaneous', NULL),
+('ȼ', '023C', 'c', 'c', 'Latin Small Letter C with Stroke', 'Latin Extended-B', 'Miscellaneous', NULL),
+('Ƚ', '023D', 'L', 'l', 'Latin Capital Letter L with Bar', 'Latin Extended-B', 'Miscellaneous', NULL),
+('Ⱦ', '023E', 'T', 't', 'Latin Capital Letter T with Diagonal Stroke', 'Latin Extended-B', 'Miscellaneous', NULL),
+('ȿ', '023F', 's', 's', 'Latin Small Letter S with Swash Tail', 'Latin Extended-B', 'Miscellaneous', NULL),
+('ɀ', '0240', 'z', 'z', 'Latin Small Letter Z with Swash Tail', 'Latin Extended-B', 'Miscellaneous', NULL),
+('Ɂ', '0241', '', '', 'Latin Capital Letter Glottal Stop', 'Latin Extended-B', 'Miscellaneous', NULL),
+('ɂ', '0242', '', '', 'Latin Small Letter Glottal Stop', 'Latin Extended-B', 'Miscellaneous', NULL),
+('Ƀ', '0243', 'B', 'b', 'Latin Capital Letter B with Stroke', 'Latin Extended-B', 'Miscellaneous', NULL),
+('Ʉ', '0244', 'U', 'u', 'Latin Capital Letter U Bar', 'Latin Extended-B', 'Miscellaneous', NULL),
+('Ʌ', '0245', '^', '', 'Latin Capital Letter Turned V', 'Latin Extended-B', 'Miscellaneous', NULL),
+('Ɇ', '0246', 'E', 'e', 'Latin Capital Letter E with Stroke', 'Latin Extended-B', 'Miscellaneous', NULL),
+('ɇ', '0247', 'e', 'e', 'Latin Small Letter E with Stroke', 'Latin Extended-B', 'Miscellaneous', NULL),
+('Ɉ', '0248', 'J', 'j', 'Latin Capital Letter J with Stroke', 'Latin Extended-B', 'Miscellaneous', NULL),
+('ɉ', '0249', 'j', 'j', 'Latin Small Letter J with Stroke', 'Latin Extended-B', 'Miscellaneous', NULL),
+('Ɋ', '024A', 'q', 'q', 'Latin Capital Letter Q with Hook Tail', 'Latin Extended-B', 'Miscellaneous', NULL),
+('ɋ', '024B', 'q', 'q', 'Latin Small Letter Q with Hook Tail', 'Latin Extended-B', 'Miscellaneous', NULL),
+('Ɍ', '024C', 'R', 'r', 'Latin Capital Letter R with stroke', 'Latin Extended-B', 'Miscellaneous', NULL),
+('ɍ', '024D', 'r', 'r', 'Latin Small Letter R with Stroke', 'Latin Extended-B', 'Miscellaneous', NULL),
+('Ɏ', '024E', 'Y', 'y', 'Latin Capital Letter Y with Stroke', 'Latin Extended-B', 'Miscellaneous', NULL),
+('ɏ', '024F', 'y', 'y', 'Latin Small Letter Y with Stroke', 'Latin Extended-B', 'Miscellaneous', NULL)
