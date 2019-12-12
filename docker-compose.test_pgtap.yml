@@ -3,6 +3,17 @@ version: "3.7"
 services:
   app:
     command: ["wait-for.sh", "db:5432", "--", "bash", "-c", "python twodii_datawarehouse.py -v --migrations-only"]
+    depends_on:
+      - db
+
+  db:
+    environment:
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD:-postgres}"
+      POSTGRES_USER: "${POSTGRES_USER:-postgres}"
+      POSTGRES_DB: "${POSTGRES_DB:-twodii}"
+    image: "postgres:11.5-alpine"
+    volumes:
+      - "test-pgtap:/var/lib/postgresql/data"
 
   db_check:
     image: hbpmip/pgtap:0.96.0-5
@@ -17,5 +28,6 @@ services:
       TESTS: /test/*.sql -v
     volumes:
       - ./test/pgtap/:/test/
-    networks:
-      - backend
+
+volumes:
+  test-pgtap:
