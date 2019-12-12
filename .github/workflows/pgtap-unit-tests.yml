@@ -11,22 +11,4 @@ jobs:
     steps:
       - uses: actions/checkout@v1
       - name: Prepare database
-        run: |
-          docker-compose \
-          -f docker-compose.yml \
-          -f docker-compose.override.yml \
-          -f docker-compose.test_pgtap.yml \
-          up \
-          --exit-code-from app \
-          app
-      - name: Run unit tests
-        run: |
-          docker-compose \
-          -f docker-compose.yml \
-          -f docker-compose.override.yml \
-          -f docker-compose.test_pgtap.yml \
-          up \
-          --exit-code-from db_check \
-          db_check
-      - name: Cleanup
-        run: docker-compose down --volumes
+        run: make test_pgtap
