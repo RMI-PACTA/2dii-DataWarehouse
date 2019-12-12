@@ -30,7 +30,3 @@ test_pgtap:
 		-f docker-compose.test_pgtap.yml \
 		down \
 		--volumes
-
-clean:
-	docker-compose down -v
-	docker container rm 2dii-data_warehouse_*

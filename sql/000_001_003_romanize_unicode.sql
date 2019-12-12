@@ -47,7 +47,7 @@ RETURNS TEXT STABLE AS $$
 DECLARE codepoint RECORD;
 BEGIN
   FOR codepoint IN (
-    SäELECT
+    SELECT
     unicode_character,
     romanized_character
     FROM etl.unicode_point
