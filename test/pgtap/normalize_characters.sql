@@ -1,12 +1,12 @@
 BEGIN;
   SELECT plan(2);
   SELECT is(
-    etl.normalize_accents_lowercase('Jyväskylä'),
+    etl.romanize_unicode('Jyväskylä'),
     'Jyvaeskylae',
     'Test transliteration of ä TO ae'
   );
   SELECT isnt(
-    etl.normalize_accents_lowercase('Jyväskylä'),
+    etl.romanize_unicode('Jyväskylä'),
     'Jyvaskyla',
     'Test transliteration of ä TO ae'
   );
