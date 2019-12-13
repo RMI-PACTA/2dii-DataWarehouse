@@ -271,7 +271,7 @@ INSERT INTO etl.unicode_point (
 ('009D', 'OSC', '', '', 'Operating System Command', 'Latin-1 Supplement', 'Control', 'OSC', FALSE),
 ('009E', 'PM', '', '', 'Private Message', 'Latin-1 Supplement', 'Control', 'PM', FALSE),
 ('009F', 'APC', '', '', 'Application Program Command', 'Latin-1 Supplement', 'Control', 'APC', FALSE),
-('00A0', ' ', ' ', '', 'Non-breaking space', 'Latin-1 Supplement', 'Punctuation', 'NBSP', FALSE),
+('00A0', ' ', ' ', ' ', 'Non-breaking space', 'Latin-1 Supplement', 'Punctuation', 'NBSP', FALSE),
 ('00A1', '¡', '!', '', 'Inverted exclamation mark', 'Latin-1 Supplement', 'Punctuation', NULL, FALSE),
 ('00A2', '¢', 'C/', '', 'Cent sign', 'Latin-1 Supplement', 'Punctuation', NULL, FALSE),
 ('00A3', '£', 'PS', '', 'Pound sign', 'Latin-1 Supplement', 'Punctuation', NULL, FALSE),
