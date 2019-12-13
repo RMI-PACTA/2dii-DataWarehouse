@@ -1,3 +1,8 @@
+/* This file will create the unicode_point TABLE which will be used IN the */
+/* CHARACTER cleaning functions. the TABLE IS a mapping FROM a unicode */
+/* CHARACTER TO the simplified character(s) that replace it IN a company name */ 
+/* (although it can be etended TO other strings AS well.) */
+
 /* transliteration OF codepoints is hard. */
 /* See https://en.wikipedia.org/wiki/Basic_Latin_(Unicode_block) */
 /* https://en.wikipedia.org/wiki/Latin-1_Supplement_%28Unicode_block%29 */
@@ -6,82 +11,6 @@
  * Unless otherwise defined, I'll be using the transliteration rules from
 * unidecode: */
 /* https://metacpan.org/source/SBURKE/Text-Unidecode-1.30/lib/Text/Unidecode/x00.pm */
-
-/* U+0009: Horizontal tab */
-/* U+0020: Space*/
-/* U+00A0: Non-breaking space */
-/* U+00AD: Soft hyphen */
-CREATE OR REPLACE FUNCTION etl.clean_whitespace(string TEXT)
-RETURNS TEXT IMMUTABLE AS $$
-BEGIN
-  string := regexp_replace(
-    string, 
-    /* These are the ascii (hexidecimal) codepoints for: (0009: Tab), (0020:
-     * Space), (00A0: nonbreaking space), (00AD: soft hyphen). using + at the
-     * end means that multiple consecutive characters in this group will be
-     * collapsed, so tab-tab would collapse to a single space. */
-    '[\u0009\u0020\u00A0]+', 
-    chr(32), -- 32 is codepoint for simple space character
-    'g' -- Replace all occurances in the string
-  );
-  return TRIM(string);
-END; $$
-LANGUAGE PLPGSQL;
-
-CREATE OR REPLACE FUNCTION etl.has_nonsimplified_characters(string TEXT)
-RETURNS BOOLEAN IMMUTABLE AS $$
-BEGIN
-  /* matches the defines the regex for simplifying unicode characters */
-  /* Currently this is: */
-  /* All ASCII letters (uppercase can be cleaned further with LOWER) */
-  /* Digits */
-  /* Literal "Space" */
-  /* literal "Ampersand" */
-  /* literal "Apostrophe" */
-  return string ~ '[^a-zA-Z0-9 &'']';
-END; $$
-LANGUAGE PLPGSQL;
-
-CREATE OR REPLACE FUNCTION etl.romanize_unicode(string TEXT)
-RETURNS TEXT STABLE AS $$
-DECLARE codepoint RECORD;
-BEGIN
-  FOR codepoint IN (
-    SELECT
-    unicode_character,
-    romanized_character
-    FROM etl.unicode_point
-    INNER JOIN (select regexp_split_to_table(string, '') as c) as s
-      on (unicode_character = s.c)
-  )
-  LOOP
-    string = replace(string, codepoint.unicode_character, codepoint.romanized_character);
-  END LOOP;
-  RETURN string;
-END; $$
-LANGUAGE PLPGSQL;
-
-CREATE OR REPLACE FUNCTION etl.simplify_unicode(string TEXT)
-RETURNS TEXT STABLE AS $$
-DECLARE codepoint RECORD;
-BEGIN
-  IF etl.has_nonsimplified_characters(string) THEN
-    FOR codepoint IN (
-      SELECT
-      unicode_character,
-      simple_romanized_character
-      FROM etl.unicode_point
-      INNER JOIN (select regexp_split_to_table(string, '') AS c) AS s
-        ON (unicode_character = s.c)
-      WHERE unicode_point.is_simplified = FALSE
-    )
-    LOOP
-      string = replace(string, codepoint.unicode_character, codepoint.simple_romanized_character);
-    END LOOP;
-  END IF;
-  RETURN LOWER(string);
-END; $$
-LANGUAGE PLPGSQL;
 
 CREATE TABLE etl.unicode_point (
   unicode_character TEXT PRIMARY KEY,
