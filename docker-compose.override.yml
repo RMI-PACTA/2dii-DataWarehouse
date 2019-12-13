@@ -7,6 +7,8 @@ services:
       - db
     stdin_open: true
     tty: true
+    networks:
+      - devnet
     volumes:
       - "${PWD}/test/data_files/:/tmp/data_files"
       - "${PWD}/app/:/usr/src/app/"
@@ -22,8 +24,13 @@ services:
     image: "postgres:11.5-alpine"
     ports:
       - "${POSTGRES_EXPOSE_PORT:-5432}:5432"
+    networks:
+      - devnet
     volumes:
       - "pgdata:/var/lib/postgresql/data"
+
+networks:
+  devnet:
 
 volumes:
   pgdata:
