@@ -10,6 +10,7 @@ the data warehouse database, and import any data files which need imported
 import sqlalchemy as sqla
 import argparse
 import logging
+import os
 
 # Project imports
 import twodii_datawarehouse.migrations as migrations
@@ -24,10 +25,10 @@ def main(migrations_only=False):
     logging.info("Establishing db connection")
     connection_string = sqla.engine.url.URL(
         drivername='postgres',
-        database='twodii',
-        username='postgres',
-        password='postgres',
-        host='db',
+        database=os.getenv('POSTGRES_DB'),
+        username=os.getenv('POSTGRES_USER'),
+        password=os.getenv('POSTGRES_PASSWORD'),
+        host=os.getenv('POSTGRES_HOST'),
         port='5432'
     )
     logging.debug(connection_string)

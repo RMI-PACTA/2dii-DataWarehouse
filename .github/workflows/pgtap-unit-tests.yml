@@ -10,5 +10,5 @@ jobs:
 
     steps:
       - uses: actions/checkout@v1
-      - name: Prepare database
+      - name: Run pgTAP tests
         run: make test_pgtap

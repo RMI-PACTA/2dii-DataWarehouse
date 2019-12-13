@@ -2,16 +2,25 @@
 version: "3.7"
 services:
   app:
-    command: ["wait-for.sh", "db:5432", "--", "bash", "-c", "python twodii_datawarehouse.py -v --migrations-only"]
+    command: [
+      "wait-for.sh", "test_db_pgtap:5432", "--",
+      "bash", "-c", "python twodii_datawarehouse.py -v --migrations-only"
+    ]
     depends_on:
-      - db
-
-  db:
+      - test_db_pgtap
     environment:
+      POSTGRES_HOST: "${POSTGRES_HOST:-test_db_pgtap}"
+    networks:
+      - testnet
+
+  test_db_pgtap:
+    environment:
+      POSTGRES_DB: "${POSTGRES_DB:-twodii}"
       POSTGRES_PASSWORD: "${POSTGRES_PASSWORD:-postgres}"
       POSTGRES_USER: "${POSTGRES_USER:-postgres}"
-      POSTGRES_DB: "${POSTGRES_DB:-twodii}"
     image: "postgres:11.5-alpine"
+    networks:
+      - testnet
     volumes:
       - "test-pgtap:/var/lib/postgresql/data"
 
@@ -19,15 +28,20 @@ services:
     image: hbpmip/pgtap:0.96.0-5
     restart: unless-stopped
     depends_on:
-      - db
+      - test_db_pgtap
     environment:
-      DATABASE: twodii
-      HOST: db
-      USER: postgres
-      PASSWORD: postgres
+      HOST: test_db_pgtap
       TESTS: /test/*.sql -v
+      DATABASE: "${POSTGRES_DB:-twodii}"
+      PASSWORD: "${POSTGRES_PASSWORD:-postgres}"
+      USER: "${POSTGRES_USER:-postgres}"
+    networks:
+      - testnet
     volumes:
       - ./test/pgtap/:/test/
+
+networks:
+  testnet:
 
 volumes:
   test-pgtap:
