@@ -1,3 +1,7 @@
+.PHONY: test
+
+test: test_pgtap
+
 test_pgtap:
 	# Stop the containers, if they are running
 	docker-compose \
