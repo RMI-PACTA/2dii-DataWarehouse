@@ -2,7 +2,10 @@
 version: "3.7"
 services:
   app:
-    command: ["wait-for.sh", "test_db_pgtap:5432", "--", "bash", "-c", "python twodii_datawarehouse.py -v --migrations-only"]
+    command: [
+      "wait-for.sh", "test_db_pgtap:5432", "--",
+      "bash", "-c", "python twodii_datawarehouse.py -v --migrations-only"
+    ]
     depends_on:
       - test_db_pgtap
     environment:
