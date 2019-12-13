@@ -8,7 +8,6 @@ test_pgtap:
 		-f docker-compose.yml \
 		-f docker-compose.test_pgtap.yml \
 		down \
-		--remove-orphans \
 		--volumes
 	# Prepare the test DB
 	docker-compose \
@@ -19,7 +18,6 @@ test_pgtap:
 		--build \
 		--exit-code-from app \
 		--force-recreate \
-		--remove-orphans \
 		app
 	# Run the tests
 	docker-compose \
@@ -30,12 +28,10 @@ test_pgtap:
 		--build \
 		--exit-code-from db_check \
 		--force-recreate \
-		--remove-orphans \
 		db_check
 	# Teardown again.
 	docker-compose \
 		-f docker-compose.yml \
 		-f docker-compose.test_pgtap.yml \
 		down \
-		--remove-orphans \
 		--volumes

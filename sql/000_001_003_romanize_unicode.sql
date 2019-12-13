@@ -79,7 +79,7 @@ BEGIN
       string = replace(string, codepoint.unicode_character, codepoint.simple_romanized_character);
     END LOOP;
   END IF;
-  RETURN string;
+  RETURN LOWER(string);
 END; $$
 LANGUAGE PLPGSQL;
 
