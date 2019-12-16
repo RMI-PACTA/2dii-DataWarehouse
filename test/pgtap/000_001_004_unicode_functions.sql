@@ -160,7 +160,9 @@ BEGIN;
   /* ('201D', '”', NULL, NULL), */
   /* ('201E', '„', NULL, NULL), */
   /* ('2026', '…', NULL, NULL), */
-  /* ('20AC', '€', NULL, NULL), */
+  ('20AC', '€', 'EUR', 'eur'),
+  ('20AC', '€9001', 'EUR9001', 'eur9001'),
+  ('20AC', 'Sw€€t', 'SwEUREURt', 'sweureurt')
   ;
 
   SELECT plan(COUNT(*)::INT * 8) FROM unicode_tests;
