@@ -1,6 +1,14 @@
 /* this file has character cleaning functions. that is, they operate on */
 /* strings, but are only concerned with characters, rather than trimming spaces */
 /* or reordering words. */
+
+/* See: https://stackoverflow.com/a/45741630 */
+CREATE OR REPLACE FUNCTION etl.regexp_escape(string TEXT)
+RETURNS TEXT IMMUTABLE STRICT PARALLEL SAFE AS $$
+BEGIN
+  RETURN regexp_replace($1, '([!$()*+.:<=>?[\\\]^{|}-])', '\\\1', 'g');
+END; $$
+LANGUAGE PLPGSQL;
   
 CREATE OR REPLACE FUNCTION etl.has_nonsimplified_characters(string TEXT)
 RETURNS BOOLEAN IMMUTABLE AS $$
