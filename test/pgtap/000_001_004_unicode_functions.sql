@@ -9,21 +9,42 @@ BEGIN;
     simplified TEXT,
     pre_simplified BOOLEAN
   );
-
+	
   INSERT INTO unicode_tests (
     codepoint, unicode, romanized, simplified, pre_simplified
   ) VALUES
-  /* ('0009', '"', NULL, NULL, false), */
-  /* ('0020', '2', NULL, NULL, false), */	 
-  /* ('0021', '!', NULL, NULL, false), */
-  /* ('0022', '"', NULL, NULL, false), */
-  /* ('0023', '#', NULL, NULL, false), */
-  /* ('0024', '$', NULL, NULL, false), */
-  /* ('0025', '%', NULL, NULL, false), */
+  ('0009', '	', ' ', ' ', false),	 
+  ('0009', 'foo	bar', 'foo bar', 'foo bar', false),	 
+  ('0020', ' ', ' ', ' ', true),	 
+  ('0020', 'foo bar', 'foo bar', 'foo bar', true),	 
+  ('0021', '!', '!', '', false),
+  ('0021', 'foobar!', 'foobar!', 'foobar', false),
+  ('0021', 'foo! bar!', 'foo! bar!', 'foo bar', false),
+  ('0022', '"', '"', '', false),
+  ('0022', 'foo"bar"', 'foo"bar"', 'foobar', false),
+  ('0022', 'foo "bar"', 'foo "bar"', 'foo bar', false),
+  ('0023', '#', '#', '', false),
+  ('0023', 'foo bar #1', 'foo bar #1', 'foo bar 1', false),
+  ('0023', 'foo #1 bar', 'foo #1 bar', 'foo 1 bar', false),
+  ('0024', '$', '$', '', false),
+  ('0024', 'foo bar US$', 'foo bar US$', 'foo bar us', false),
+  ('0024', 'foo $ bar', 'foo $ bar', 'foo  bar', false),
+  ('0024', '$tring$', '$tring$', 'tring', false), --Useing $ in place of S
+  ('0024', '$99Bn Company', '$99Bn Company', '99bn company', false),
+  ('0025', '%', '%', '', false),
+  ('0025', '99% complete', '99% complete', '99 complete', false),
+  ('0025', 'foo 99% bar', 'foo 99% bar', 'foo 99 bar', false),
   /* ('0026', '&', NULL, NULL, false), */
   /* ('0027', ''', NULL, NULL, false), */
-  /* ('0028', '(', NULL, NULL, false), */
-  /* ('0029', ')', NULL, NULL, false), */
+  ('0028', '(', '(', '', false),
+  /* yes, there ARE cases with only open parens */
+  ('0028', 'foo (bar', 'foo (bar', 'foo bar', false),
+  ('0028', 'foo(bar', 'foo(bar', 'foobar', false),
+  ('0028', 'foo (bar)', 'foo (bar)', 'foo bar', false),
+  ('0028', 'foo(bar)', 'foo(bar)', 'foobar', false),
+  ('0029', ')', ')', '', false),
+  ('0029', 'foo (bar)', 'foo (bar)', 'foo bar', false),
+  ('0029', 'foo(bar)', 'foo(bar)', 'foobar', false),
   /* ('002A', '*', NULL, NULL, false), */
   /* ('002B', '+', NULL, NULL, false), */
   /* ('002C', ',', NULL, NULL, false), */
@@ -45,7 +66,9 @@ BEGIN;
   /* ('003C', '<', NULL, NULL, false), */
   /* ('003E', '>', NULL, NULL, false), */
   /* ('003F', '?', NULL, NULL, false), */
-  /* ('0040', '@', NULL, NULL, false), */
+  ('0040', '@', '@', '', false),
+  ('0040', 'meg@w@tt', 'meg@w@tt', 'megwtt', false),
+  ('0040', 'foo @ bar', 'foo @ bar', 'foo  bar', false), --2 spaces
   /* ('0041', 'A', NULL, NULL, false), */
   /* ('0042', 'B', NULL, NULL, false), */
   /* ('0043', 'C', NULL, NULL, false), */
@@ -175,48 +198,51 @@ BEGIN;
 
   /* check that the uniciode string actually contains the listed codepoint. */
   SELECT matches(
-    unicode, chr(('x' ||codepoint)::bit(16)::int),
+    unicode, etl.regexp_escape(chr(('x' ||codepoint)::bit(16)::int)),
     'Test the test: unicode string contains the listed codepoint \u' ||codepoint || ': ' || quote_literal(unicode)
   ) FROM unicode_tests;
 
   /* check that the romanized string does actually contains the listed codepoint. */
   SELECT matches(
-    romanized, chr(('x' ||codepoint)::bit(16)::int),
+    romanized, etl.regexp_escape(chr(('x' ||codepoint)::bit(16)::int)),
     'Test the test: romanized string contains the pre-simplified listed codepoint \u' ||codepoint || ': ' || quote_literal(romanized)
   ) FROM unicode_tests
-  WHERE pre_simplified;
+  WHERE codepoint >= '0020'
+  AND codepoint <= '007E'; --Romanized string are the ascii range
 
   /* check that the romanized string does not actually contains the listed codepoint. */
   SELECT doesnt_match(
-    romanized, chr(('x' ||codepoint)::bit(16)::int),
+    romanized, etl.regexp_escape(chr(('x' ||codepoint)::bit(16)::int)),
     'Test the test: romanized string does not contain the listed codepoint \u' ||codepoint || ': ' || quote_literal(romanized)
   ) FROM unicode_tests
-  WHERE NOT pre_simplified;
+  WHERE codepoint < '0020'
+  OR codepoint > '007E'; --Romanized string are the ascii range
 
   /* check that the simplified string does actually contains the listed codepoint. */
   SELECT matches(
-    simplified, chr(('x' ||codepoint)::bit(16)::int),
+    simplified, etl.regexp_escape(chr(('x' ||codepoint)::bit(16)::int)),
     'Test the test: simplified string contains the pre-simplified listed codepoint \u' ||codepoint || ': ' || quote_literal(simplified)
   ) FROM unicode_tests
   WHERE pre_simplified;
 
   /* check that the simplified string does not actually contains the listed codepoint. */
   SELECT doesnt_match(
-    simplified, chr(('x' ||codepoint)::bit(16)::int),
+    simplified, etl.regexp_escape(chr(('x' ||codepoint)::bit(16)::int)),
     'Test the test: simplified string does not contain the listed codepoint \u' ||codepoint || ': ' || quote_literal(simplified)
   ) FROM unicode_tests
   WHERE NOT pre_simplified;
 
   /* check that the simplified string does not have uppercase letters. */
   SELECT matches(
-    romanized, '[a-zA-Z0-9 ''&]', --Lowers, digits, Ampersand, space, apostrophe
-    'Test the test: romanized string ONLY has restrited subset \u' ||codepoint || ': ' || quote_literal(romanized)
+    /* space to tilde is ASCII printible range */
+    romanized, '^[ -~ ]*$',
+    'Test the test: romanized string ONLY has restricted subset \u' ||codepoint || ': ' || quote_literal(romanized)
   ) FROM unicode_tests;
 
   /* check that the simplified string does not have uppercase letters. */
   SELECT matches(
-    simplified, '[a-z0-9 ''&]', --Lowers, digits, Ampersand, space, apostrophe
-    'Test the test: simplified string ONLY has restrited subset \u' ||codepoint || ': ' || quote_literal(simplified)
+    simplified, '^[a-z0-9 ''&]*$', --Lowers, digits, Ampersand, space, apostrophe
+    'Test the test: simplified string only has restricted subset \u' ||codepoint || ': ' || quote_literal(simplified)
   ) FROM unicode_tests;
 
   /* ------ Run tests again the functions ------ */
