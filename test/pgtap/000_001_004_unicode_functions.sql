@@ -81,7 +81,8 @@ BEGIN;
   /* ('0062', 'b', NULL, NULL, false), */
   /* ('0063', 'c', NULL, NULL, false), */
   /* ('0064', 'd', NULL, NULL, false), */
-  /* ('0065', 'e', NULL, NULL, false), */
+  ('0065', 'e', 'e', 'e', true),
+  ('0065', 'Feed mee', 'Feed mee', 'feed mee', true),
   /* ('0066', 'f', NULL, NULL, false), */
   /* ('0067', 'g', NULL, NULL, false), */
   /* ('0068', 'h', NULL, NULL, false), */
@@ -168,7 +169,7 @@ BEGIN;
   ('20AC', 'Sw€€t', 'SwEUREURt', 'sweureurt', false)
   ;
 
-  SELECT plan(COUNT(*)::INT * 8) FROM unicode_tests;
+  SELECT plan(COUNT(*)::INT * 9) FROM unicode_tests;
 
   /*-----Test the test cases, to make sure we are covering what we want.-----*/
 
@@ -178,16 +179,38 @@ BEGIN;
     'Test the test: unicode string contains the listed codepoint \u' ||codepoint || ': ' || quote_literal(unicode)
   ) FROM unicode_tests;
 
+  /* check that the romanized string does actually contains the listed codepoint. */
+  SELECT matches(
+    romanized, chr(('x' ||codepoint)::bit(16)::int),
+    'Test the test: romanized string contains the pre-simplified listed codepoint \u' ||codepoint || ': ' || quote_literal(romanized)
+  ) FROM unicode_tests
+  WHERE pre_simplified;
+
   /* check that the romanized string does not actually contains the listed codepoint. */
   SELECT doesnt_match(
     romanized, chr(('x' ||codepoint)::bit(16)::int),
     'Test the test: romanized string does not contain the listed codepoint \u' ||codepoint || ': ' || quote_literal(romanized)
-  ) FROM unicode_tests;
+  ) FROM unicode_tests
+  WHERE NOT pre_simplified;
+
+  /* check that the simplified string does actually contains the listed codepoint. */
+  SELECT matches(
+    simplified, chr(('x' ||codepoint)::bit(16)::int),
+    'Test the test: simplified string contains the pre-simplified listed codepoint \u' ||codepoint || ': ' || quote_literal(simplified)
+  ) FROM unicode_tests
+  WHERE pre_simplified;
 
   /* check that the simplified string does not actually contains the listed codepoint. */
   SELECT doesnt_match(
     simplified, chr(('x' ||codepoint)::bit(16)::int),
     'Test the test: simplified string does not contain the listed codepoint \u' ||codepoint || ': ' || quote_literal(simplified)
+  ) FROM unicode_tests
+  WHERE NOT pre_simplified;
+
+  /* check that the simplified string does not have uppercase letters. */
+  SELECT matches(
+    romanized, '[a-zA-Z0-9 ''&]', --Lowers, digits, Ampersand, space, apostrophe
+    'Test the test: romanized string ONLY has restrited subset \u' ||codepoint || ': ' || quote_literal(romanized)
   ) FROM unicode_tests;
 
   /* check that the simplified string does not have uppercase letters. */
@@ -198,11 +221,21 @@ BEGIN;
 
   /* ------ Run tests again the functions ------ */
 
+  /* check that the strings have only simplified characters */
+  /* consider that FOR the etl.has_nonsimplified_characters, */
+  /* uppercase characters ARE considered simplified */
+  SELECT is(etl.has_nonsimplified_characters(unicode),
+    false,
+    'Check unicode string is non-simplified \u' ||codepoint || ': ' || quote_literal(unicode)
+  ) FROM unicode_tests
+  WHERE pre_simplified;
+
   /* check that the strings have non-simplified characters */
   SELECT is(etl.has_nonsimplified_characters(unicode),
     true,
     'Check unicode string is non-simplified \u' ||codepoint || ': ' || quote_literal(unicode)
-  ) FROM unicode_tests;
+  ) FROM unicode_tests
+  WHERE NOT pre_simplified;
 
   /* check that the simplified strings have only simplified characters */
   SELECT is(etl.has_nonsimplified_characters(simplified),
