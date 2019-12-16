@@ -631,4 +631,14 @@ INSERT INTO etl.unicode_point (
 ('024C', 'Ɍ', 'R', 'r', 'Latin Capital Letter R with stroke', 'Latin Extended-B', 'Miscellaneous', NULL, FALSE),
 ('024D', 'ɍ', 'r', 'r', 'Latin Small Letter R with Stroke', 'Latin Extended-B', 'Miscellaneous', NULL, FALSE),
 ('024E', 'Ɏ', 'Y', 'y', 'Latin Capital Letter Y with Stroke', 'Latin Extended-B', 'Miscellaneous', NULL, FALSE),
-('024F', 'ɏ', 'y', 'y', 'Latin Small Letter Y with Stroke', 'Latin Extended-B', 'Miscellaneous', NULL, FALSE)
+('024F', 'ɏ', 'y', 'y', 'Latin Small Letter Y with Stroke', 'Latin Extended-B', 'Miscellaneous', NULL, FALSE),
+('2013', '–', '-', '', 'En Dash', 'General Punctuation', 'Punctuation', NULL, FALSE),
+('2014', '—', '-', '', 'Em Dash', 'General Punctuation', 'Punctuation', NULL, FALSE),
+('2018', '‘', '''', '', 'Left Single Quotation Mark', 'General Punctuation', 'Punctuation', NULL, FALSE),
+('2019', '’', '''', '', 'Right Single Quotation Mark', 'General Punctuation', 'Punctuation', NULL, FALSE),
+('201A', '‚', ',', '', 'Single Low-9 Quotation Mark', 'General Punctuation', 'Punctuation', NULL, FALSE),
+('201C', '“', '"', '', 'Left Double Quotation Mark', 'General Punctuation', 'Punctuation', NULL, FALSE),
+('201D', '”', '"', '', 'Right Double Quotation Mark', 'General Punctuation', 'Punctuation', NULL, FALSE),
+('201E', '„', ',,', '', 'Double Low-9 Quotation Mark', 'General Punctuation', 'Punctuation', NULL, FALSE),
+('2026', '…', '...', '', 'Horizontal Ellipsis', 'General Punctuation', 'Punctuation', NULL, FALSE),
+('20AC', '€', 'EUR', 'eur', 'Euro Sign', 'Currency Symbols', 'Punctuation', NULL, FALSE)
