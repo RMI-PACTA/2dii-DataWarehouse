@@ -1,6 +1,13 @@
 BEGIN;
 
-  SELECT plan(24);
+  SELECT plan(25);
+
+  SELECT skip(1, 'has_function not implemented in pgtap 0.95');
+
+  /* SELECT has_function( */
+  /*  'etl', 'regexp_escape', */
+  /*   '000_001_004_a_1 etl.regexp_escape function exists' */
+  /* ); */
 
   SELECT is(
     etl.regexp_escape('!'),
