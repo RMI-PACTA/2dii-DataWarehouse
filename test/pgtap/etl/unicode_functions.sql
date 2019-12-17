@@ -194,26 +194,24 @@ BEGIN;
 
   SELECT plan(3 + COUNT(*)::INT * 9) FROM unicode_tests;
 
-  SELECT skip(3, 'has_function not implemented in pgtap 0.95');
+   SELECT has_function( 
+    'etl', 'has_nonsimplified_characters', 
+     'etl.regexp_escape function exists' 
+   ); 
 
-  /* SELECT has_function( */
-  /*  'etl', 'has_nonsimplified_characters', */
-  /*   '000_001_004_a_1 etl.regexp_escape function exists' */
-  /* ); */
+   SELECT has_function( 
+    'etl', 'romanize_unicode', 
+     'etl.regexp_escape function exists' 
+   ); 
 
-  /* SELECT has_function( */
-  /*  'etl', 'romanize_unicode', */
-  /*   '000_001_004_a_1 etl.regexp_escape function exists' */
-  /* ); */
+   SELECT has_function( 
+    'etl', 'simplify_unicode', 
+     'etl.regexp_escape function exists' 
+   ); 
 
-  /* SELECT has_function( */
-  /*  'etl', 'simplify_unicode', */
-  /*   '000_001_004_a_1 etl.regexp_escape function exists' */
-  /* ); */
+  -----Test the test cases, to make sure we are covering what we want.-----
 
-  /*-----Test the test cases, to make sure we are covering what we want.-----*/
-
-  /* check that the uniciode string actually contains the listed codepoint. */
+   /* check that the uniciode string actually contains the listed codepoint. */ 
   SELECT matches(
     unicode, etl.regexp_escape(chr(('x' ||codepoint)::bit(16)::int)),
     'Test the test: unicode string contains the listed codepoint \u' ||codepoint || ': ' || quote_literal(unicode)
