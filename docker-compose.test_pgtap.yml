@@ -31,7 +31,7 @@ services:
       - test_db_pgtap
     environment:
       HOST: test_db_pgtap
-      TESTS: --recurse /test/ --ext .sql
+      TESTS: --recurse /test/ --ext .sql --failures --nocolor
       DATABASE: "${POSTGRES_DB:-twodii}"
       PASSWORD: "${POSTGRES_PASSWORD:-postgres}"
       USER: "${POSTGRES_USER:-postgres}"
