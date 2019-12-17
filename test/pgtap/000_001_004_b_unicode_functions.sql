@@ -29,7 +29,7 @@ BEGIN;
   ('0024', '$', '$', '', false),
   ('0024', 'foo bar US$', 'foo bar US$', 'foo bar us', false),
   ('0024', 'foo $ bar', 'foo $ bar', 'foo  bar', false),
-  ('0024', '$tring$', '$tring$', 'tring', false), --Useing $ in place of S
+  ('0024', '$tring$', '$tring$', 'tring', false), --Using $ in place of S
   ('0024', '$99Bn Company', '$99Bn Company', '99bn company', false),
   ('0025', '%', '%', '', false),
   ('0025', '99% complete', '99% complete', '99 complete', false),
@@ -187,9 +187,9 @@ BEGIN;
   /* ('201D', '”', NULL, NULL, false), */
   /* ('201E', '„', NULL, NULL, false), */
   /* ('2026', '…', NULL, NULL, false), */
-  ('20AC', '€', 'EUR', 'eur', false),
-  ('20AC', '€9001', 'EUR9001', 'eur9001', false),
-  ('20AC', 'Sw€€t', 'SwEUREURt', 'sweureurt', false)
+  ('20AC', '€', 'EUR', '', false),
+  ('20AC', '€9001', 'EUR9001', '9001', false),
+  ('20AC', 'Sw€€t', 'SwEUREURt', 'swt', false)
   ;
 
   SELECT plan(COUNT(*)::INT * 9) FROM unicode_tests;
@@ -245,7 +245,7 @@ BEGIN;
     'Test the test: simplified string only has restricted subset \u' ||codepoint || ': ' || quote_literal(simplified)
   ) FROM unicode_tests;
 
-  /* ------ Run tests again the functions ------ */
+  /* ------ Run tests against the functions ------ */
 
   /* check that the strings have only simplified characters */
   /* consider that FOR the etl.has_nonsimplified_characters, */
