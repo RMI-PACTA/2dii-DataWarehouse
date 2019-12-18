@@ -4,7 +4,7 @@
 /* U+0020: Space*/
 /* U+00A0: Non-breaking space */
 /* U+00AD: Soft hyphen */
-CREATE OR REPLACE FUNCTION etl.clean_whitespace(string TEXT)
+CREATE FUNCTION etl.clean_whitespace(string TEXT)
 RETURNS TEXT IMMUTABLE AS $$
 BEGIN
   string := regexp_replace(

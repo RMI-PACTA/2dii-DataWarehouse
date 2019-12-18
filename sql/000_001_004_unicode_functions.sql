@@ -3,14 +3,14 @@
 /* or reordering words. */
 
 /* See: https://stackoverflow.com/a/45741630 */
-CREATE OR REPLACE FUNCTION etl.regexp_escape(string TEXT)
+CREATE FUNCTION etl.regexp_escape(string TEXT)
 RETURNS TEXT IMMUTABLE STRICT PARALLEL SAFE AS $$
 BEGIN
   RETURN regexp_replace($1, '([!$()*+.:<=>?[\\\]^{|}-])', '\\\1', 'g');
 END; $$
 LANGUAGE PLPGSQL;
   
-CREATE OR REPLACE FUNCTION etl.has_nonsimplified_characters(string TEXT)
+CREATE FUNCTION etl.has_nonsimplified_characters(string TEXT)
 RETURNS BOOLEAN IMMUTABLE AS $$
 BEGIN
   /* matches the defines the regex for simplifying unicode characters */
@@ -24,7 +24,7 @@ BEGIN
 END; $$
 LANGUAGE PLPGSQL;
 
-CREATE OR REPLACE FUNCTION etl.romanize_unicode(string TEXT)
+CREATE FUNCTION etl.romanize_unicode(string TEXT)
 RETURNS TEXT STABLE AS $$
 DECLARE codepoint RECORD;
 BEGIN
@@ -43,7 +43,7 @@ BEGIN
 END; $$
 LANGUAGE PLPGSQL;
 
-CREATE OR REPLACE FUNCTION etl.simplify_unicode(string TEXT)
+CREATE FUNCTION etl.simplify_unicode(string TEXT)
 RETURNS TEXT STABLE AS $$
 DECLARE codepoint RECORD;
 BEGIN
