@@ -54,6 +54,17 @@ BEGIN;
     'column "regexp_flags" is text'
   );
 
+  SELECT col_is_unique(
+    'etl', 'company_name_abbreviations',
+    'to_replace',
+    'column "to_replace" is text'
+  );
+  SELECT col_is_unique(
+    'etl', 'company_name_abbreviations',
+    'replacement',
+    'column "to_replace" is text'
+  );
+
   SELECT has_index(
     'etl', 'company_name_abbreviations',
     'ix_company_name_replacement_cover',

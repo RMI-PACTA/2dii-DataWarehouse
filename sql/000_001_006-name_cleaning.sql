@@ -3,7 +3,7 @@
 
 CREATE TABLE etl.company_name_abbreviations (
   to_replace TEXT NOT NULL UNIQUE,
-  replacement TEXT NOT NULL,
+  replacement TEXT NOT NULL UNIQUE,
   regexp_flags TEXT NOT NULL DEFAULT 'ig'
 );
 CREATE INDEX ix_company_name_replacement_cover ON etl.company_name_abbreviations (
@@ -13,68 +13,89 @@ CREATE INDEX ix_company_name_replacement_cover ON etl.company_name_abbreviations
 );
 
 INSERT INTO etl.company_name_abbreviations (
-  to_replace, replacement, regexp_flags
+  replacement, to_replace, regexp_flags
 ) VALUES
-('(inactive)', '', 'ig'),
 (' and ', ' & ', 'ig'),
-(' och ', ' & ', 'ig'),
 (' en ', ' & ', 'ig'),
+(' och ', ' & ', 'ig'),
 (' und ', ' & ', 'ig'),
-('development', 'dev', 'ig'),
-('develop', 'dev', 'ig'),
-('group', 'grp', 'ig'),
-('designated activity company', 'dac', 'ig'),
-('limited partnership', 'lp', 'ig'),
-('generation', 'gen', 'ig'),
-('investment', 'invest', 'ig'),
-('limited', 'ltd', 'ig'),
-('company', 'co', 'ig'),
-('public ltd co', 'plc', 'ig'),
-('corporation', 'corp', 'ig'),
-('ltd liability co', 'llc', 'ig'),
+('(inactive)', '', 'ig'),
 ('aktg', 'ag', 'ig'),
 ('aktiengesellschaft', 'ag', 'ig'),
-('incorporated', 'inc', 'ig'),
-('holdings', 'hldgs', 'ig'),
-('holding', 'hldgs', 'ig'),
-('international', 'intl', 'ig'),
-('government', 'govt', 'ig'),
-('berhad', 'bhd', 'ig'),
-('resources', 'res', 'ig'),
-('resource', 'res', 'ig'),
-('shipping', 'shp', 'ig'),
-('partners', 'prt', 'ig'),
-('partner', 'prt', 'ig'),
-('associates', 'assoc', 'ig'),
 ('associate', 'assoc', 'ig'),
-(' dac$', '$dac', 'i'),
-(' sas$', '$sas', 'i'),
-(' asa$', '$asa', 'i'),
-(' spa$', '$spa', 'i'),
-(' pte$', '$pte', 'i'),
-(' srl$', '$srl', 'i'),
-(' ltd$', '$ltd', 'i'),
-(' plc$', '$plc', 'i'),
-(' pcl$', '$pcl', 'i'),
-(' bsc$', '$bsc', 'i'),
-(' sarl$', '$sarl', 'i'),
-(' as$', '$as', 'i'),
-(' nv$', '$nv', 'i'),
-(' bv$', '$bv', 'i'),
-(' cv$', '$cv', 'i'),
-(' pt$', '$pt', 'i'),
-(' sa$', '$sa', 'i'),
-(' se$', '$se', 'i'),
-(' lp$', '$lp', 'i'),
-(' corp$', '$corp', 'i'),
-(' co$', '$co', 'i'),
-(' llc$', '$llc', 'i'),
+('associates', 'assoc', 'ig'),
+('berhad', 'bhd', 'ig'),
+('company', 'co', 'ig'),
+('corporation', 'corp', 'ig'),
+('designated activity company', 'dac', 'ig'),
+('develop', 'dev', 'ig'),
+('development', 'dev', 'ig'),
+('financial', 'fin', 'ig'),
+('generation', 'gen', 'ig'),
+('government', 'govt', 'ig'),
+('group', 'grp', 'ig'),
+('holding', 'hldgs', 'ig'),
+('holdings', 'hldgs', 'ig'),
+('incorporated', 'inc', 'ig'),
+('international', 'intl', 'ig'),
+('investment', 'invest', 'ig'),
+('limited partnership', 'lp', 'ig'),
+('limited', 'ltd', 'ig'),
+('ltd liability co', 'llc', 'ig'),
+('partner', 'prt', 'ig'),
+('partners', 'prt', 'ig'),
+('public ltd co', 'plc', 'ig'),
+('resource', 'res', 'ig'),
+('resources', 'res', 'ig'),
+('shipping', 'shp', 'ig'),
+
 (' ag$', '$ag', 'i'),
-(' inc$', '$inc', 'i'),
-(' hldgs$', '$hldgs', 'i'),
-(' intl$', '$intl', 'i'),
-(' govt$', '$govt', 'i'),
+(' as$', '$as', 'i'),
+(' asa$', '$asa', 'i'),
 (' bhd$', '$bhd', 'i'),
+(' bsc$', '$bsc', 'i'),
+(' bv$', '$bv', 'i'),
+(' co$', '$co', 'i'),
+(' corp$', '$corp', 'i'),
+(' cv$', '$cv', 'i'),
+(' dac$', '$dac', 'i'),
+(' govt$', '$govt', 'i'),
+(' hldgs$', '$hldgs', 'i'),
+(' inc$', '$inc', 'i'),
+(' intl$', '$intl', 'i'),
+(' llc$', '$llc', 'i'),
+(' lp$', '$lp', 'i'),
 (' lt$', '$ltd', 'i'),
-('financial', 'fin', 'ig')
+(' ltd$', '$ltd', 'i'),
+(' nv$', '$nv', 'i'),
+(' pcl$', '$pcl', 'i'),
+(' plc$', '$plc', 'i'),
+(' pt$', '$pt', 'i'),
+(' pte$', '$pte', 'i'),
+(' sa$', '$sa', 'i'),
+(' sarl$', '$sarl', 'i'),
+(' sas$', '$sas', 'i'),
+(' se$', '$se', 'i'),
+(' spa$', '$spa', 'i'),
+(' srl$', '$srl', 'i')
 ;
+
+CREATE FUNCTION etl.replace_name_abbreviations(string TEXT)
+RETURNS TEXT STABLE AS $$
+DECLARE name_replacement RECORD;
+BEGIN
+  FOR name_replacement IN (
+    SELECT
+      to_replace,
+      replacement,
+      regexp_flags
+    FROM etl.company_name_abbreviations
+    WHERE string ~* cna.to_replace  
+  )
+  LOOP
+    string = regexp_replace(string, to_replace, replacement, regexp_flags);
+  END LOOP;
+  RETURN LOWER(string);
+END; $$
+LANGUAGE PLPGSQL;
+
