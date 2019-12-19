@@ -17,12 +17,12 @@ BEGIN;
     'Test regexp_escape: ' || quote_literal('$'));
   SELECT is(
     etl.regexp_escape('('),
-      '\(',
-        'Test regexp_escape: ' || quote_literal('('));
-        SELECT is(
-          etl.regexp_escape(')'),
-        '\)',
-      'Test regexp_escape: ' || quote_literal(')'));
+    '\(',
+    'Test regexp_escape: ' || quote_literal('('));
+  SELECT is(
+    etl.regexp_escape(')'),
+    '\)',
+    'Test regexp_escape: ' || quote_literal(')'));
   SELECT is(
     etl.regexp_escape('*'),
     '\*',

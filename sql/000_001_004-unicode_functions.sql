@@ -13,7 +13,7 @@ LANGUAGE PLPGSQL;
 CREATE FUNCTION etl.has_nonsimplified_characters(string TEXT)
 RETURNS BOOLEAN IMMUTABLE AS $$
 BEGIN
-  /* matches the defines the regex for simplifying unicode characters */
+  /* defines the regex for simplifying unicode characters */
   /* Currently this is: */
   /* All ASCII letters (uppercase can be cleaned further with LOWER) */
   /* Digits */
