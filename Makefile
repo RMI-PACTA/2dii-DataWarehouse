@@ -1,9 +1,14 @@
+.PHONY: test
+
+test: test_pgtap
+
 test_pgtap:
 	# Stop the containers, if they are running
 	docker-compose \
 		-f docker-compose.yml \
 		-f docker-compose.test_pgtap.yml \
-		down
+		down \
+		--volumes
 	# Prepare the test DB
 	docker-compose \
 		-f docker-compose.yml \
@@ -30,7 +35,3 @@ test_pgtap:
 		-f docker-compose.test_pgtap.yml \
 		down \
 		--volumes
-
-clean:
-	docker-compose down -v
-	docker container rm 2dii-data_warehouse_*
