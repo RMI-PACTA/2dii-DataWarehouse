@@ -1,6 +1,7 @@
 ---
-name: PGTap Unit Tests
-
+name: pgTAP Unit Tests
+description: Run pgTAP unit tests, using the process defined in the Makefile.
+# See /Makefile and /test/pgtap/README.md for more information.
 on: push
 
 jobs:
