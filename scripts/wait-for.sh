@@ -1,5 +1,5 @@
 #!/bin/sh
-
+#This script needs a brief comment.
 TIMEOUT=15
 QUIET=0
 
