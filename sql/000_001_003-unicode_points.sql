@@ -7,9 +7,9 @@
 /* See https://en.wikipedia.org/wiki/Basic_Latin_(Unicode_block) */
 /* https://en.wikipedia.org/wiki/Latin-1_Supplement_%28Unicode_block%29 */
 
-/* These functions ARE grouped BY the codepoints that they operate upon.
- * Unless otherwise defined, I'll be using the transliteration rules from
-* unidecode: */
+/* These functions ARE grouped BY the codepoints that they operate upon. */
+/* Unless otherwise defined, I'll be using the transliteration rules from */
+/* unidecode: */
 /* https://metacpan.org/source/SBURKE/Text-Unidecode-1.30/lib/Text/Unidecode/x00.pm */
 
 CREATE TABLE etl.unicode_point (
@@ -40,7 +40,9 @@ INSERT INTO etl.unicode_point (
   notes,
   is_simplified
 ) VALUES
---Standard set of characters that are consistent and exist for Basic Latin set
+/* This block is the characters in the first unicode block, part of the */
+/* second, as well as any additional characters already found in the */
+/* data (unicode points > 02FF) */
 ('0000', 'NUL', '', '', 'Null character', 'Basic Latin', 'Control', 'NUL', FALSE),
 ('0001', 'SOH', '', '', 'Start of Heading', 'Basic Latin', 'Control', 'SOH', FALSE),
 ('0002', 'STX', '', '', 'Start of Text', 'Basic Latin', 'Control', 'STX', FALSE),
@@ -214,7 +216,8 @@ INSERT INTO etl.unicode_point (
 ('00AA', 'ª', 'a', '', 'Feminine Ordinal Indicator', 'Latin-1 Supplement', 'Punctuation', NULL, FALSE),
 ('00AB', '«', '<<', '', 'Left-pointing double angle quotation mark', 'Latin-1 Supplement', 'Punctuation', NULL, FALSE),
 ('00AC', '¬', '!', '', 'Not sign', 'Latin-1 Supplement', 'Punctuation', NULL, FALSE),
-('00AD', '­', '', '', 'Soft hyphen', 'Latin-1 Supplement', 'Whitespace', 'SHY', FALSE), --Technically an invisible character, but controls hyphenation across linebreaks.
+('00AD', '­', '', '', 'Soft hyphen', 'Latin-1 Supplement', 'Whitespace', 'SHY', FALSE),
+/* 00AD Technically an invisible character, but controls hyphenation across linebreaks. */
 ('00AE', '®', '(r)', '', 'Registered sign', 'Latin-1 Supplement', 'Punctuation', NULL, FALSE),
 ('00AF', '¯', '-', '', 'Macron', 'Latin-1 Supplement', 'Punctuation', NULL, FALSE),
 ('00B0', '°', 'deg', '', 'Degree symbol', 'Latin-1 Supplement', 'Punctuation', NULL, FALSE),
@@ -270,7 +273,7 @@ INSERT INTO etl.unicode_point (
 ('00E2', 'â', 'a', 'a', 'Latin Small Letter A with circumflex', 'Latin-1 Supplement', 'Latin letters', NULL, FALSE),
 ('00E3', 'ã', 'a', 'a', 'Latin Small Letter A with tilde', 'Latin-1 Supplement', 'Latin letters', NULL, FALSE),
 ('00E4', 'ä', 'ae', 'ae', 'Latin Small Letter A with diaeresis', 'Latin-1 Supplement', 'Latin letters', NULL, FALSE),
---Defined in previous matching algorithm
+/* 00E4 Defined in previous matching algorithm */
 ('00E5', 'å', 'a', 'a', 'Latin Small Letter A with ring above', 'Latin-1 Supplement', 'Latin letters', NULL, FALSE),
 ('00E6', 'æ', 'ae', 'ae', 'Latin Small Letter AE', 'Latin-1 Supplement', 'Latin letters', NULL, FALSE),
 ('00E7', 'ç', 'c', 'c', 'Latin Small Letter C with cedilla', 'Latin-1 Supplement', 'Latin letters', NULL, FALSE),
@@ -289,7 +292,7 @@ INSERT INTO etl.unicode_point (
 ('00F4', 'ô', 'o', 'o', 'Latin Small Letter O with circumflex', 'Latin-1 Supplement', 'Latin letters', NULL, FALSE),
 ('00F5', 'õ', 'o', 'o', 'Latin Small Letter O with tilde', 'Latin-1 Supplement', 'Latin letters', NULL, FALSE),
 ('00F6', 'ö', 'oe', 'oe', 'Latin Small Letter O with diaeresis', 'Latin-1 Supplement', 'Latin letters', NULL, FALSE),
---Defined in previous matching algorithm
+/* 00F6 Defined in previous matching algorithm */
 ('00F7', '÷', '/', '', 'Division sign', 'Latin-1 Supplement', 'Punctuation', NULL, FALSE),
 ('00F8', 'ø', 'o', 'o', 'Latin Small Letter O with stroke', 'Latin-1 Supplement', 'Latin letters', NULL, FALSE),
 ('00F9', 'ù', 'u', 'u', 'Latin Small Letter U with grave', 'Latin-1 Supplement', 'Latin letters', NULL, FALSE),
@@ -347,8 +350,8 @@ INSERT INTO etl.unicode_point (
 ('012D', 'ĭ', 'i', 'i', 'Latin Small letter I with breve', 'Latin Extended-A', 'Latin letters', NULL, FALSE),
 ('012E', 'Į', 'I', 'i', 'Latin Capital letter I with ogonek', 'Latin Extended-A', 'Latin letters', NULL, FALSE),
 ('012F', 'į', 'i', 'i', 'Latin Small letter I with ogonek', 'Latin Extended-A', 'Latin letters', NULL, FALSE),
-/* ('0130', 'İ', 'I', 'i', 'Latin Capital letter I with dot above', 'Latin Extended-A', 'Latin letters', NULL, FALSE), 
---Not found in dataset, unlikely to appear, and testing this character is difficult */
+/* ('0130', 'İ', 'I', 'i', 'Latin Capital letter I with dot above', 'Latin Extended-A', 'Latin letters', NULL, FALSE), */
+/* Character 0130 Not found in dataset, unlikely to appear, and testing this character is difficult */
 ('0131', 'ı', 'i', 'i', 'Latin Small letter dotless I', 'Latin Extended-A', 'Latin letters', NULL, FALSE),
 ('0132', 'Ĳ', 'IJ', 'ij', 'Latin Capital Ligature IJ', 'Latin Extended-A', 'Latin letters', NULL, FALSE),
 ('0133', 'ĳ', 'ij', 'ij', 'Latin Small Ligature IJ', 'Latin Extended-A', 'Latin letters', NULL, FALSE),
@@ -373,7 +376,8 @@ INSERT INTO etl.unicode_point (
 ('0146', 'ņ', 'n', 'n', 'Latin Small letter N with cedilla', 'Latin Extended-A', 'Latin letters', NULL, FALSE),
 ('0147', 'Ň', 'N', 'n', 'Latin Capital letter N with caron', 'Latin Extended-A', 'Latin letters', NULL, FALSE),
 ('0148', 'ň', 'n', 'n', 'Latin Small letter N with caron', 'Latin Extended-A', 'Latin letters', NULL, FALSE),
-/* Character \u0149 is deprecated, and unlikely to appear in our datasets. */
+/* ('0149', 'ŉ', '''n', 'n', 'Latin Small letter N preceded by apostrophe', 'Latin Extended-A', 'Deprecated Letter', NULL, FALSE), */
+/* Character 0149 is deprecated, and unlikely to appear in our datasets. */
 ('014A', 'Ŋ', 'ng', 'ng', 'Latin Capital letter Eng', 'Latin Extended-A', 'Latin letters', NULL, FALSE),
 ('014B', 'ŋ', 'NG', 'ng', 'Latin Small letter Eng', 'Latin Extended-A', 'Latin letters', NULL, FALSE),
 ('014C', 'Ō', 'O', 'o', 'Latin Capital letter O with macron', 'Latin Extended-A', 'Latin letters', NULL, FALSE),
@@ -443,8 +447,8 @@ INSERT INTO etl.unicode_point (
 ('018C', 'ƌ', 'd', 'd', 'Latin Small Letter D with Top Bar', 'Latin Extended-B', 'Non-European Latin letters', NULL, FALSE),
 ('018D', 'ƍ', 'd', 'd', 'Latin Small Letter Turned Delta', 'Latin Extended-B', 'Non-European Latin letters', NULL, FALSE),
 ('018E', 'Ǝ', '3', '3', 'Latin Capital Letter Reversed E', 'Latin Extended-B', 'Non-European Latin letters', NULL, FALSE),
-/* ('018F', 'Ə', '@', '', 'Latin Capital Letter Schwa', 'Latin Extended-B', 'Non-European Latin letters', NULL, FALSE), 
---Not found in dataset, unlikely to appear, and testing this character is difficult */
+/* ('018F', 'Ə', '@', '', 'Latin Capital Letter Schwa', 'Latin Extended-B', 'Non-European Latin letters', NULL, FALSE), */
+/* Character 018F Not found in dataset, unlikely to appear, and testing this character is difficult */
 ('0190', 'Ɛ', 'E', 'e', 'Latin Capital Letter Open E', 'Latin Extended-B', 'Non-European Latin letters', NULL, FALSE),
 ('0191', 'Ƒ', 'F', 'f', 'Latin Capital Letter F with Hook', 'Latin Extended-B', 'Non-European Latin letters', NULL, FALSE),
 ('0192', 'ƒ', 'f', 'f', 'Latin Small Letter F with Hook', 'Latin Extended-B', 'Non-European Latin letters', NULL, FALSE),
@@ -522,8 +526,8 @@ INSERT INTO etl.unicode_point (
 ('01DA', 'ǚ', 'u', 'u', 'Latin Small Letter U with Diaeresis and Caron', 'Latin Extended-B', 'Pinyin', NULL, FALSE),
 ('01DB', 'Ǜ', 'U', 'u', 'Latin Capital Letter U with Diaeresis and Grave', 'Latin Extended-B', 'Pinyin', NULL, FALSE),
 ('01DC', 'ǜ', 'u', 'u', 'Latin Small Letter U with Diaeresis and Grave', 'Latin Extended-B', 'Pinyin', NULL, FALSE),
-/* ('01DD', 'ǝ', '@', '', 'Latin Small Letter Turned E', 'Latin Extended-B', 'Phonetic', NULL, FALSE), 
---Not found in dataset, unlikely to appear, and testing this character is difficult */
+/* ('01DD', 'ǝ', '@', '', 'Latin Small Letter Turned E', 'Latin Extended-B', 'Phonetic', NULL, FALSE), */
+/* Character 01DD Not found in dataset, unlikely to appear, and testing this character is difficult */
 ('01DE', 'Ǟ', 'A', 'a', 'Latin Capital Letter A with Diaeresis and Macron', 'Latin Extended-B', 'Phonetic', NULL, FALSE),
 ('01DF', 'ǟ', 'a', 'a', 'Latin Small Letter A with Diaeresis and Macron', 'Latin Extended-B', 'Phonetic', NULL, FALSE),
 ('01E0', 'Ǡ', 'A', 'a', 'Latin Capital Letter A with Dot Above and Macron', 'Latin Extended-B', 'Phonetic', NULL, FALSE),
@@ -627,8 +631,8 @@ INSERT INTO etl.unicode_point (
 ('0242', 'ɂ', '', '', 'Latin Small Letter Glottal Stop', 'Latin Extended-B', 'Miscellaneous', NULL, FALSE),
 ('0243', 'Ƀ', 'B', 'b', 'Latin Capital Letter B with Stroke', 'Latin Extended-B', 'Miscellaneous', NULL, FALSE),
 ('0244', 'Ʉ', 'U', 'u', 'Latin Capital Letter U Bar', 'Latin Extended-B', 'Miscellaneous', NULL, FALSE),
-/* ('0245', 'Ʌ', '^', '', 'Latin Capital Letter Turned V', 'Latin Extended-B', 'Miscellaneous', NULL, FALSE), 
---Not found in dataset, unlikely to appear, and testing this character is difficult */
+/* ('0245', 'Ʌ', '^', '', 'Latin Capital Letter Turned V', 'Latin Extended-B', 'Miscellaneous', NULL, FALSE), */
+/* Character 0245 Not found in dataset, unlikely to appear, and testing this character is difficult */
 ('0246', 'Ɇ', 'E', 'e', 'Latin Capital Letter E with Stroke', 'Latin Extended-B', 'Miscellaneous', NULL, FALSE),
 ('0247', 'ɇ', 'e', 'e', 'Latin Small Letter E with Stroke', 'Latin Extended-B', 'Miscellaneous', NULL, FALSE),
 ('0248', 'Ɉ', 'J', 'j', 'Latin Capital Letter J with Stroke', 'Latin Extended-B', 'Miscellaneous', NULL, FALSE),
