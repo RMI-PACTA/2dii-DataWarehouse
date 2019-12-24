@@ -1,3 +1,4 @@
+ --Brief explanation for this versus other table builds.  Also, are we keeping it in public?
   CREATE TABLE public.dw_version (
     major INT NOT NULL,
     minor INT NOT NULL,
