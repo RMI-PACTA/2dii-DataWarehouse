@@ -1,5 +1,12 @@
 #!/bin/sh
-#This script needs a brief comment.
+# This code is a copy of
+# https://github.com/eficode/wait-for
+# brought in as a file copy, rather than a git submodule.
+# This is a script which accepts bash commands as arguments, and passes them
+# through after waiting for a port to become available (such as postgres, on
+# 5432). This is useful in docker containers, to prevent errors because an
+# application attempts to connect to a database which has not yet finished
+# initializing.
 TIMEOUT=15
 QUIET=0
 
