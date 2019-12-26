@@ -17,7 +17,7 @@ INSERT INTO etl.company_name_abbreviations (
   replacement,
   regexp_flags
 ) VALUES
-(' and ', ' & ', 'ig'),
+('\s+and\s+', ' & ', 'ig'),
 (' en ', ' & ', 'ig'),
 (' och ', ' & ', 'ig'),
 (' und ', ' & ', 'ig'),
@@ -104,4 +104,3 @@ BEGIN
   RETURN LOWER(string);
 END; $$
 LANGUAGE PLPGSQL;
-
