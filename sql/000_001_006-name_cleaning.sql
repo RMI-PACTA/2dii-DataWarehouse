@@ -3,7 +3,7 @@
 
 CREATE TABLE etl.company_name_abbreviations (
   to_replace TEXT NOT NULL UNIQUE,
-  replacement TEXT NOT NULL UNIQUE,
+  replacement TEXT NOT NULL,
   regexp_flags TEXT NOT NULL DEFAULT 'ig'
 );
 CREATE INDEX ix_company_name_replacement_cover ON etl.company_name_abbreviations (
@@ -13,7 +13,9 @@ CREATE INDEX ix_company_name_replacement_cover ON etl.company_name_abbreviations
 );
 
 INSERT INTO etl.company_name_abbreviations (
-  replacement, to_replace, regexp_flags
+  to_replace,
+  replacement,
+  regexp_flags
 ) VALUES
 (' and ', ' & ', 'ig'),
 (' en ', ' & ', 'ig'),
@@ -48,7 +50,6 @@ INSERT INTO etl.company_name_abbreviations (
 ('resource', 'res', 'ig'),
 ('resources', 'res', 'ig'),
 ('shipping', 'shp', 'ig'),
-
 (' ag$', '$ag', 'i'),
 (' as$', '$as', 'i'),
 (' asa$', '$asa', 'i'),
@@ -90,10 +91,15 @@ BEGIN
       replacement,
       regexp_flags
     FROM etl.company_name_abbreviations
-    WHERE string ~* cna.to_replace  
+    WHERE string ~* to_replace  
   )
   LOOP
-    string = regexp_replace(string, to_replace, replacement, regexp_flags);
+    string = regexp_replace(
+      string,
+      name_replacement.to_replace,
+      name_replacement.replacement,
+      name_replacement.regexp_flags
+    );
   END LOOP;
   RETURN LOWER(string);
 END; $$

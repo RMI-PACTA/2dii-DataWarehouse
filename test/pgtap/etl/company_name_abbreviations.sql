@@ -1,6 +1,6 @@
 BEGIN;
   SELECT plan((
-    9
+    10
     + (SELECT count(*) FROM etl.company_name_abbreviations) * 3
     + (SELECT count(*) FROM etl.company_name_abbreviations) ^ 2
   )::INT);
@@ -41,28 +41,23 @@ BEGIN;
   SELECT col_not_null(
     'etl', 'company_name_abbreviations',
     'to_replace',
-    'column "to_replace" is text'
+    'column "to_replace" is NOT NULL'
   );
   SELECT col_not_null(
     'etl', 'company_name_abbreviations',
     'replacement',
-    'column "replacement" is text'
+    'column "replacement" is NOT NULL'
   );
   SELECT col_not_null(
     'etl', 'company_name_abbreviations',
     'regexp_flags',
-    'column "regexp_flags" is text'
+    'column "regexp_flags" is NOT NULL'
   );
 
   SELECT col_is_unique(
     'etl', 'company_name_abbreviations',
     'to_replace',
-    'column "to_replace" is text'
-  );
-  SELECT col_is_unique(
-    'etl', 'company_name_abbreviations',
-    'replacement',
-    'column "to_replace" is text'
+    'column "to_replace" is unique'
   );
 
   SELECT has_index(
