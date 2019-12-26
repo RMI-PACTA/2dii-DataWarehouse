@@ -17,7 +17,7 @@ BEGIN
   /* Currently this is: */
   /* All ASCII letters (uppercase can be cleaned further with LOWER) */
   /* Digits */
-  /* Literal "Space" */
+  /* literal "Space" */
   /* literal "Ampersand" */
   /* literal "Apostrophe" */
   return string ~ '[^a-zA-Z0-9 &'']';

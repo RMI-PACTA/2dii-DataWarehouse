@@ -1,7 +1,8 @@
 ---
 name: Python Unit Tests
-
-on: push
+# Run python unit tests, using `pytest` inside a docker container
+# See /test/pytest/README.md for details on the python unit testing process.
+"on": push
 
 jobs:
   build:

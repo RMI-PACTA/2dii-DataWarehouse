@@ -44,16 +44,6 @@ Some of the fundamental assumptions that we are basing our decisions on are:
 * Our data is not "large"
   * Even the largest of single files that we regularly import is in the many tens of thousands of records (rows).
 
-### Core Structure
-
-The database will be grouped logically into three schemata:
-
-* `rawdata:` contains the data that has been imported, but not transformed in any way, and details about the import process.
-* `etl`: contains intermediate processing tables, as well as functions, and procedures for transforming, cleaning, and preparing data, as well as running data quality checks.
-* `dw`: the primary schema that analysts will access. Contains data that has been integrated and processed into a useful format.
-
-Because `dw` is the primary point of interest, access SHOULD be restricted for most users to that schema only.
-
 ### Business Logic in Database Code
 
 Because the end-product for the intermediate future is the database, rather than an application which consumes the database, it is acceptable, and perhaps preferable, to keep logic inside the database.

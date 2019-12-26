@@ -1,9 +1,6 @@
 BEGIN;
   SELECT plan(COUNT(*)::INT * 5) FROM etl.unicode_point;
 
-  /* TODO: Write tests coverin strucure, indices AND contents (that the simplified */
-  /*   COLUMN actuall partitions ON simplified criteria) */
-
   /* ---- Test 1: romanized characters are printible ---- */
   SELECT matches(
     romanized_character,
