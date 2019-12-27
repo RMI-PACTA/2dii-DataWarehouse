@@ -21,7 +21,7 @@ INSERT INTO etl.company_name_abbreviations (
 ('\s+en\s+', ' & ', 'ig'),
 ('\s+och\s+', ' & ', 'ig'),
 ('\s+und\s+', ' & ', 'ig'),
-('(inactive)', '', 'ig'),
+('\(inactive\)', '', 'ig'),
 ('aktg', 'ag', 'ig'),
 ('aktiengesellschaft', 'ag', 'ig'),
 ('associate', 'assoc', 'ig'),

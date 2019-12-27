@@ -37,13 +37,27 @@ BEGIN;
   ('A und B', 'a & b', '''und'' to ampersand'),
   ('A UND B', 'a & b', '''und'' case-insensitive'),
   ('A	und  B', 'a & b', '''und'' alternative_spacing'),
-  ('Bundesliga', 'bundesliga', '''und'' in middle of wword not replaced'),
+  ('Bundesliga', 'bundesliga', '''und'' in middle of word not replaced'),
   ('towed under', 'towed under', '''und'' at beginning of word not replaced'),
   ('fund manager', 'fund manager', '''und'' at end of word not replaced'),
-
   /* (inactive) */
+  ('noparens inactive', 'noparens inactive', '''inactive'' without parens not replaced'),
+  ('foobar(inactive)', 'foobar', NULL),
+  ('foobar (inactive)', 'foobar ', '''(inactive)'' with spaces does not remove spaces'),
+  ('foobar	(inactive)', 'foobar	', '''inactive'' with tabs'),
+  ('(inactive) outdated organization', ' outdated organization', '''(inactive)'' at beginning of string does not replace space'),
+  ('inactive outdated organization', ' outdated organization', '''inactive'' without parens not replaced'),
   /* aktg */
+  ('foobar aktg', 'foobar ag', NULL),
+  ('foobar-aktg', 'foobar-ag', NULL),
+  ('Foobar AKTG', 'foobar ag', NULL),
+  ('foo aktg bar', 'foo ag bar', NULL),
   /* aktiengesellschaft */
+  ('foobar aktiengesellschaft', 'foobar ag', NULL),
+  ('foobar-aktiengesellschaft', 'foobar-ag', NULL),
+  ('Foobar AKTIENGESELLSCHAFT', 'foobar ag', NULL),
+  ('Foobar Aktiengesellschaft', 'foobar ag', NULL),
+  ('foo aktiengesellschaft bar', 'foo ag bar', NULL),
   /* associate */
   /* associates */
   /* berhad */
