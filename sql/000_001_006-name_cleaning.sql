@@ -101,6 +101,6 @@ BEGIN
       name_replacement.regexp_flags
     );
   END LOOP;
-  RETURN LOWER(string);
+  RETURN string;
 END; $$
 LANGUAGE PLPGSQL;

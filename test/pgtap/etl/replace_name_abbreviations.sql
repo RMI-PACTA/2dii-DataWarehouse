@@ -13,7 +13,7 @@ BEGIN;
   ) VALUES
   /* \s+and\s+ */
   ('this and that', 'this & that', '''and'' to ampersand'),
-  ('THIS AND THAT', 'this & that', '''and'' case-insensitive'),
+  ('THIS AND THAT', 'THIS & THAT', '''and'' case-insensitive'),
   ('this  and  that', 'this & that', '''and'' with multiple spaces'),
   ('this	and that', 'this & that', '''and'' with tab before'),
   ('bandcamp', 'bandcamp', '''and'' in middle of word not replaced'),
@@ -21,23 +21,23 @@ BEGIN;
   ('robot android', 'robot android', '''and'' at beginning of word not replaced'),
   /* \s+en\s+ */
   ('dit en dat', 'dit & dat', '''en'' to ampersand'),
-  ('DIT EN DAT', 'dit & dat', '''en'' to ampersand'),
-  ('Levenshtein', 'levenshtein', '''en'' in middle of word not replaced'),
+  ('DIT EN DAT', 'DIT & DAT', '''en'' to ampersand'),
+  ('Levenshtein', 'Levenshtein', '''en'' in middle of word not replaced'),
   ('dit	en  dat', 'dit & dat', '''en'' with spacings'),
   ('ten thousand', 'ten thousand', '''en'' at end of word not replaced'),
-  ('The End', 'the end', '''en'' at beginning of word not replaced'),
+  ('The End', 'The End', '''en'' at beginning of word not replaced'),
   /* \s+och\s+ */
-  ('A och B', 'a & b', '''och'' to ampersand'),
-  ('A OCH B', 'a & b', '''och'' case-insensitive'),
-  ('A	och  B', 'a & b', '''och'' alternative_spacing'),
-  ('Sochi', 'sochi', '''och'' in middle of word not replaced'),
+  ('A och B', 'A & B', '''och'' to ampersand'),
+  ('A OCH B', 'A & B', '''och'' case-insensitive'),
+  ('A	och  B', 'A & B', '''och'' alternative_spacing'),
+  ('Sochi', 'Sochi', '''och'' in middle of word not replaced'),
   ('tengo ocho llamas', 'tengo ocho llamas', '''och'' at beginning of word not replaced'),
-  ('Loch Ness', 'loch ness', '''och'' at end of word not replaced'),
+  ('Loch Ness', 'Loch Ness', '''och'' at end of word not replaced'),
   /* \s+und\s+ */
-  ('A und B', 'a & b', '''und'' to ampersand'),
-  ('A UND B', 'a & b', '''und'' case-insensitive'),
-  ('A	und  B', 'a & b', '''und'' alternative_spacing'),
-  ('Bundesliga', 'bundesliga', '''und'' in middle of word not replaced'),
+  ('A und B', 'A & B', '''und'' to ampersand'),
+  ('A UND B', 'A & B', '''und'' case-insensitive'),
+  ('A	und  B', 'A & B', '''und'' alternative_spacing'),
+  ('Bundesliga', 'Bundesliga', '''und'' in middle of word not replaced'),
   ('towed under', 'towed under', '''und'' at beginning of word not replaced'),
   ('fund manager', 'fund manager', '''und'' at end of word not replaced'),
   /* (inactive) */
@@ -50,13 +50,13 @@ BEGIN;
   /* aktg */
   ('foobar aktg', 'foobar ag', NULL),
   ('foobar-aktg', 'foobar-ag', NULL),
-  ('Foobar AKTG', 'foobar ag', NULL),
+  ('Foobar AKTG', 'Foobar ag', NULL),
   ('foo aktg bar', 'foo ag bar', NULL),
   /* aktiengesellschaft */
   ('foobar aktiengesellschaft', 'foobar ag', NULL),
   ('foobar-aktiengesellschaft', 'foobar-ag', NULL),
-  ('Foobar AKTIENGESELLSCHAFT', 'foobar ag', NULL),
-  ('Foobar Aktiengesellschaft', 'foobar ag', NULL),
+  ('Foobar AKTIENGESELLSCHAFT', 'Foobar ag', NULL),
+  ('Foobar Aktiengesellschaft', 'Foobar ag', NULL),
   ('foo aktiengesellschaft bar', 'foo ag bar', NULL),
   /* associate */
   /* associates */
@@ -114,8 +114,13 @@ BEGIN;
   /* \s+spa$ */
   /* \s+srl$ */
 
-/* empty string */
-('', '', 'Empty string')
+  /* test non-simplified characters */
+  ('Jyväskylä', 'Jyväskylä', 'unicode characters not affected'),
+  ('Ä änd B', 'Ä änd B', 'unicode characters not affected'),
+  ('Ä and B', 'Ä & B', 'unicode characters not affected'),
+
+  /* empty string */
+  ('', '', 'Empty string')
 ;
 
   SELECT plan(count(*)::INT) FROM name_abbreviation_tests;
