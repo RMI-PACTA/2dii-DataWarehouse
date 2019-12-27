@@ -46,7 +46,7 @@ BEGIN;
   ('foobar (inactive)', 'foobar ', '''(inactive)'' with spaces does not remove spaces'),
   ('foobar	(inactive)', 'foobar	', '''inactive'' with tabs'),
   ('(inactive) outdated organization', ' outdated organization', '''(inactive)'' at beginning of string does not replace space'),
-  ('inactive outdated organization', ' outdated organization', '''inactive'' without parens not replaced'),
+  ('inactive outdated organization', 'inactive outdated organization', '''inactive'' without parens not replaced'),
   /* aktg */
   ('foobar aktg', 'foobar ag', NULL),
   ('foobar-aktg', 'foobar-ag', NULL),
