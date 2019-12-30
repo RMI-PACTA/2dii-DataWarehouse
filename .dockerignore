@@ -1,5 +1,7 @@
 .git
 env
 
-__pychache__
+/* ignore README and other markdown files */
+**/*.md
 
+__pychache__
