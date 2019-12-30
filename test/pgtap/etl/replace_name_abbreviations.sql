@@ -40,6 +40,8 @@ BEGIN;
   ('Bundesliga', 'Bundesliga', '''und'' in middle of word not replaced'),
   ('towed under', 'towed under', '''und'' at beginning of word not replaced'),
   ('fund manager', 'fund manager', '''und'' at end of word not replaced'),
+  /* ampersand */
+  ('this & that', 'this & that', 'ampersand does not change'),
   /* (inactive) */
   ('noparens inactive', 'noparens inactive', '''inactive'' without parens not replaced'),
   ('foobar(inactive)', 'foobar', NULL),
@@ -52,6 +54,7 @@ BEGIN;
   ('foobar-aktg', 'foobar-ag', NULL),
   ('Foobar AKTG', 'Foobar ag', NULL),
   ('foo aktg bar', 'foo ag bar', NULL),
+  ('foo ag bar', 'foo ag bar', '''ag'' does not reduce'),
   /* aktiengesellschaft */
   ('foobar aktiengesellschaft', 'foobar ag', NULL),
   ('foobar-aktiengesellschaft', 'foobar-ag', NULL),
@@ -60,6 +63,10 @@ BEGIN;
   ('foo aktiengesellschaft bar', 'foo ag bar', NULL),
   /* associate */
   /* associates */
+  ('testing associates', 'testing assocs', '''associates'' reduces to assoc'),
+  ('Testing Associates', 'Testing assocs', NULL),
+  ('foo, bar, & associates', 'foo, bar, & assocs', NULL),
+  ('Foo, Bar, & Associates', 'Foo, Bar, & assocs', NULL),
   /* berhad */
   /* company */
   /* corporation */
