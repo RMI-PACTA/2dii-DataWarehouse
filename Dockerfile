@@ -23,6 +23,9 @@ RUN ["chmod", "-Rvv", "+x", "/usr/src/scripts/"]
 COPY app/ ./
 COPY sql/ /usr/src/sql/
 
+RUN groupadd -r twodii && useradd --no-log-init -r -g twodii twodii
+USER twodii
+
 CMD [ \
   "wait-for.sh",  "db:5432", "--", \
   "python", "./twodii_datawarehouse.py", "-v" \
