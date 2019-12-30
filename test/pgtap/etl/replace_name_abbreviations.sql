@@ -50,23 +50,24 @@ BEGIN;
   ('(inactive) outdated organization', ' outdated organization', '''(inactive)'' at beginning of string does not replace space'),
   ('inactive outdated organization', 'inactive outdated organization', '''inactive'' without parens not replaced'),
   /* aktg */
-  ('foobar aktg', 'foobar ag', NULL),
+  ('foobar aktg', 'foobar$ag', NULL),
   ('foobar-aktg', 'foobar-ag', NULL),
-  ('Foobar AKTG', 'Foobar ag', NULL),
+  ('Foobar AKTG', 'Foobar$ag', NULL),
   ('foo aktg bar', 'foo ag bar', NULL),
-  ('foo ag bar', 'foo ag bar', '''ag'' does not reduce'),
   /* aktiengesellschaft */
-  ('foobar aktiengesellschaft', 'foobar ag', NULL),
+  ('foobar aktiengesellschaft', 'foobar$ag', NULL),
   ('foobar-aktiengesellschaft', 'foobar-ag', NULL),
-  ('Foobar AKTIENGESELLSCHAFT', 'Foobar ag', NULL),
-  ('Foobar Aktiengesellschaft', 'Foobar ag', NULL),
+  ('Foobar AKTIENGESELLSCHAFT', 'Foobar$ag', NULL),
+  ('Foobar Aktiengesellschaft', 'Foobar$ag', NULL),
   ('foo aktiengesellschaft bar', 'foo ag bar', NULL),
+  ('foobar ag', 'foobar$ag', '''ag'' does not reduce'),
+  ('foo ag bar', 'foo ag bar', '''ag'' does not reduce'),
   /* associate */
   /* associates */
-  ('testing associates', 'testing assocs', '''associates'' reduces to assoc'),
-  ('Testing Associates', 'Testing assocs', NULL),
-  ('foo, bar, & associates', 'foo, bar, & assocs', NULL),
-  ('Foo, Bar, & Associates', 'Foo, Bar, & assocs', NULL),
+  ('testing associates', 'testing assoc', '''associates'' reduces to assoc'),
+  ('Testing Associates', 'Testing assoc', NULL),
+  ('foo, bar, & associates', 'foo, bar, & assoc', NULL),
+  ('Foo, Bar, & Associates', 'Foo, Bar, & assoc', NULL),
   /* berhad */
   /* company */
   /* corporation */

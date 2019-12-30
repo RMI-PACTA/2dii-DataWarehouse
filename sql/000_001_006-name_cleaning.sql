@@ -24,8 +24,8 @@ INSERT INTO etl.company_name_abbreviations (
 ('\(inactive\)', '', 'ig'),
 ('aktg', 'ag', 'ig'),
 ('aktiengesellschaft', 'ag', 'ig'),
-('associate', 'assoc', 'ig'),
-('associates', 'assoc', 'ig'),
+/* covers associate AND associates, single and plural */
+('associate[s]*', 'assoc', 'ig'),
 ('berhad', 'bhd', 'ig'),
 ('company', 'co', 'ig'),
 ('corporation', 'corp', 'ig'),
@@ -81,10 +81,24 @@ INSERT INTO etl.company_name_abbreviations (
 ('\s+srl$', '$srl', 'i')
 ;
 
-CREATE FUNCTION etl.replace_name_abbreviations(string TEXT)
+CREATE FUNCTION etl.replace_name_abbreviations(
+  string TEXT,
+  recursion SMALLINT DEFAULT 0,
+  max_recursion SMALLINT DEFAULT 5
+)
 RETURNS TEXT STABLE AS $$
-DECLARE name_replacement RECORD;
+DECLARE
+  name_replacement RECORD;
+  original_string TEXT;
 BEGIN
+  /* protect against infinite recursion */
+  IF recursion >= max_recursion THEN
+    RAISE EXCEPTION 'Name replacement recursion exceeded';
+  END IF;
+  /* cache the original_string for later comparison */
+  original_string := string;
+  /* this will be empty for the last recursion, since there will be no */
+  /* matching patterns */
   FOR name_replacement IN (
     SELECT
       to_replace,
@@ -92,6 +106,7 @@ BEGIN
       regexp_flags
     FROM etl.company_name_abbreviations
     WHERE string ~* to_replace  
+    ORDER BY to_replace
   )
   LOOP
     string = regexp_replace(
@@ -101,6 +116,13 @@ BEGIN
       name_replacement.regexp_flags
     );
   END LOOP;
+  /* if there was a change, run the process again, to ensure we are catching */
+  /* all the simplifications */
+  IF string != original_string THEN
+    string = etl.replace_name_abbreviations(string, (recursion + 1)::SMALLINT);
+  END IF;
+  /* return the value after all recursions. the lowest level recursion will */
+  /* propogate up to the top through the returns */
   RETURN string;
 END; $$
 LANGUAGE PLPGSQL;
