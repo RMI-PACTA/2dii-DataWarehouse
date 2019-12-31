@@ -179,7 +179,30 @@ CREATE TEMPORARY TABLE name_abbreviation_tests (
   ('Groupement FooBar', 'grpement FooBar', 'groupement - ement'),
   ('Groupama', 'grpama', 'groupama - ama'),
   /* holding */
+  ('foobar holding', 'foobar$hldgs', NULL),
+  ('FooBar Holding', 'FooBar$hldgs', NULL),
+  ('foo holding bar', 'foo hldgs bar', NULL),
+  ('Holding Foobar', 'hldgs Foobar', NULL),
+  ('Holdingfoo bar', 'hldgsfoo bar', NULL),
+  ('Fooholdingbar', 'Foohldgsbar', NULL),
+  ('Foo Shipholding bar', 'Foo Shiphldgs bar', NULL),
+  ('Foo Energoholding bar', 'Foo Energohldgs bar', NULL),
+  ('Foo Shareholding bar', 'Foo Sharehldgs bar', NULL),
+  ('Foo Industrieholding bar', 'Foo Industriehldgs bar', NULL),
+  ('Foo Stockholding bar', 'Foo Stockhldgs bar', NULL),
+  ('Foo Topholding bar', 'Foo Tophldgs bar', NULL),
+  ('Foo Muniholding bar', 'Foo Munihldgs bar', NULL),
+  ('Foo Wingholding bar', 'Foo Winghldgs bar', NULL),
   /* holdings */
+  ('foobar holdings', 'foobar$hldgs', NULL),
+  ('FooBar Holdings', 'FooBar$hldgs', NULL),
+  ('foo holdings bar', 'foo hldgs bar', NULL),
+  ('Holdings Foobar', 'hldgs Foobar', NULL),
+  ('Holdingsfoo bar', 'hldgsfoo bar', NULL),
+  ('Fooholdings bar', 'Foohldgs bar', NULL),
+  ('Foo Shipholdings bar', 'Foo Shiphldgs bar', NULL),
+  ('FooBar (Holdings)', 'FooBar (hldgs)', NULL),
+  ('foo (holdings) bar', 'foo (hldgs) bar', NULL),
   /* incorporated */
   /* international */
   /* investment */
@@ -240,6 +263,14 @@ CREATE TEMPORARY TABLE name_abbreviation_tests (
   ('foo intergovtl bar', 'foo intergovtl bar', 'intergovtl'),
   ('foobar govts', 'foobar govts', NULL),
   /* \s+hldgs$ */
+  ('foobar hldgs', 'foobar$hldgs', NULL),
+  ('foobar Hldgs', 'foobar$hldgs', NULL),
+  ('Foo Hldgs Bar', 'Foo hldgs Bar', NULL),
+  ('foobar (Hldgs)', 'foobar (hldgs)', NULL),
+  ('foobar hldg', 'foobar hldg', 'hldg - no s'),
+  ('foobar Hldg', 'foobar Hldg', 'hldg - no s'),
+  ('Foo Hldg Bar', 'Foo Hldg Bar', 'hldg - no s'),
+  ('Foo Shiphldg Bar', 'Foo Shiphldg Bar', 'hldg - no s'),
   /* \s+inc$ */
   /* \s+intl$ */
   /* \s+llc$ */
