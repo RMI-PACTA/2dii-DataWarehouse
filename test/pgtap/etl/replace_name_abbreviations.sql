@@ -134,8 +134,35 @@ CREATE TEMPORARY TABLE name_abbreviation_tests (
   ('foobar developpement', 'foobar devpement', 'developpement - 2 p'),
   ('foobar redevelopement', 'foobar redevement', 'developement - additional e'),
   /* financial */
+  ('foobar financial', 'foobar fin', NULL),
+  ('FooBar Financial', 'FooBar fin', NULL),
+  ('foobar financial services', 'foobar fin services', NULL),
+  ('financial foobar', 'fin foobar', NULL),
+  ('Financial Foobar', 'fin Foobar', NULL),
+  ('foo financials bar', 'foo fins bar', 'financials - s at the end'),
+  ('foofinancial bar', 'foofin bar', NULL),
+  ('foofinancialbar', 'foofinbar', NULL),
   /* generation */
+  ('foobar generation', 'foobar gen', NULL),
+  ('FooBar Generation', 'FooBar gen', NULL),
+  ('foobargeneration', 'foobargen', NULL),
+  ('generation foobar', 'gen foobar', NULL),
+  ('foo generation bar', 'foo gen bar', NULL),
+  ('foo generations bar', 'foo gens bar', 'generations - plural'),
+  ('foo cogeneration bar', 'foo cogen bar', 'cogeneration'),
+  ('foo co-generation bar', 'foo co-gen bar', 'cogeneration'),
   /* government */
+  ('foobar government', 'foobar$govt', NULL),
+  ('FooBar government', 'FooBar$govt', NULL),
+  ('Foo Government Department of Bar', 'Foo govt Department of Bar', NULL),
+  ('Government of Foobar', 'govt of Foobar', NULL),
+  ('government of foobar', 'govt of foobar', NULL),
+  ('foo government bar', 'foo govt bar', NULL),
+  ('foo intergovernment bar', 'foo intergovt bar', 'intergovernment'),
+  ('foo governments bar', 'foo govts bar', 'governments'),
+  ('foo governmental bar', 'foo govtal bar', 'governmental'),
+  ('foo intergovernmental bar', 'foo intergovtal bar', 'intergovernmental'),
+  ('foo governmentbar', 'foo govtbar', NULL),
   /* group */
   /* holding */
   /* holdings */
@@ -192,6 +219,12 @@ CREATE TEMPORARY TABLE name_abbreviation_tests (
   ('Foodac', 'Foodac', NULL),
   ('foo dac bar', 'foo dac bar', NULL),
   /* \s+govt$ */
+  ('foobar govt', 'foobar$govt', NULL),
+  ('foobar Govt', 'foobar$govt', NULL),
+  ('foo govt dept of bar', 'foo govt dept of bar', NULL),
+  ('govt of foobar', 'govt of foobar', NULL),
+  ('foo intergovtl bar', 'foo intergovtl bar', 'intergovtl'),
+  ('foobar govts', 'foobar govts', NULL),
   /* \s+hldgs$ */
   /* \s+inc$ */
   /* \s+intl$ */
