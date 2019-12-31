@@ -37,7 +37,7 @@ CREATE TEMPORARY TABLE name_abbreviation_tests (
   ('tengo ocho llamas', 'tengo ocho llamas', '''och'' at beginning of word not replaced'),
   ('Loch Ness', 'Loch Ness', '''och'' at end of word not replaced'),
   ('och more', 'och more', '''och'' at beginning of string not replaced (~* ^och\s)'),
-  ('foo och', 'foo och', '''och'' at ochd of string not replaced (~* \soch$)'),
+  ('foo och', 'foo och', '''och'' at end of string not replaced (~* \soch$)'),
   /* \s+und\s+ */
   ('A und B', 'A & B', '''und'' to ampersand'),
   ('A UND B', 'A & B', '''und'' case-insensitive'),
@@ -46,7 +46,7 @@ CREATE TEMPORARY TABLE name_abbreviation_tests (
   ('towed under', 'towed under', '''und'' at beginning of word not replaced'),
   ('fund manager', 'fund manager', '''und'' at end of word not replaced'),
   ('und more', 'und more', '''und'' at beginning of string not replaced (~* ^und\s)'),
-  ('foo und', 'foo und', '''und'' at undd of string not replaced (~* \sund$)'),
+  ('foo und', 'foo und', '''und'' at end of string not replaced (~* \sund$)'),
   /* ampersand */
   ('this & that', 'this & that', 'ampersand does not change'),
   /* (inactive) */
@@ -74,6 +74,7 @@ CREATE TEMPORARY TABLE name_abbreviation_tests (
   ('Testing Associate', 'Testing assoc', NULL),
   ('foo, bar, & associate', 'foo, bar, & assoc', NULL),
   ('Foo, Bar, & Associate', 'Foo, Bar, & assoc', NULL),
+  /* associated, Note the d at the end. */
   ('Associated Media', 'assocd Media', '''associated'' reduces to assocd'),
   ('foo associate bar', 'foo assoc bar', NULL),
   /* associates */
@@ -95,6 +96,14 @@ CREATE TEMPORARY TABLE name_abbreviation_tests (
   ('Foo BarCompany', 'Foo Barco', '~* company, !~* \scompany'),
   ('foo barcompany', 'foo barco', NULL),
   /* corporation */
+  ('foobar corporation', 'foobar$corp', NULL),
+  ('FooBar Corporation', 'FooBar$corp', NULL),
+  ('foobar corporation private', 'foobar corp private', NULL),
+  ('FooBar Corporation Private', 'FooBar corp private', NULL),
+  ('foobar (corporation)', 'foobar (corp)', NULL),
+  ('corporation foobar ', 'corp foobar', NULL),
+  ('foobar bancorporation', 'foobar bancorp', NULL),
+  ('foobar incorporation', 'foobar incorp', NULL),
   /* designated\s+activity\s+company */
   /* develop */
   /* development */
@@ -137,10 +146,17 @@ CREATE TEMPORARY TABLE name_abbreviation_tests (
   ('Foobar co', 'Foobar$co', NULL),
   ('Foobar Co', 'Foobar$co', NULL),
   ('Foobar	Co', 'Foobar$co', 'tab whitespace'),
-  ('Foobar & Co', 'Foobar &$co', 'tab whitespace'),
+  ('Foobar & Co', 'Foobar &$co', NULL),
   ('foocobar', 'foocobar', NULL),
   ('foo co bar', 'foo co bar', NULL),
   /* \s+corp$ */
+  ('Foobar corp', 'Foobar$corp', NULL),
+  ('Foobar Corp', 'Foobar$corp', NULL),
+  ('Foobar	Corp', 'Foobar$corp', 'tab whitespace'),
+  ('Foocorp', 'Foocorp', 'replacing a suffix needs whitespace'),
+  ('corpFoo', 'corpFoo', NULL),
+  ('Scorpion', 'Scorpion', 'do not replace corp in middle of word'),
+  ('foo corp bar', 'foo corp bar',  'do not replace corp in middle of string'),
   /* \s+cv$ */
   /* \s+dac$ */
   /* \s+govt$ */
