@@ -110,7 +110,29 @@ CREATE TEMPORARY TABLE name_abbreviation_tests (
   ('foobar designated activity co', 'foobar$dac', 'company collapses to co'),
   ('Foobar Designated Activity Co', 'Foobar$dac', 'company collapses to co'),
   /* develop */
+  ('foobar develop', 'foobar dev', NULL),
+  ('FooBar Develop', 'FooBar dev', NULL),
+  ('develop foobar', 'dev foobar', NULL),
+  ('foo develop bar', 'foo dev bar', NULL),
+  ('idevelop foobar', 'idev foobar', NULL),
+  ('foobar developer', 'foobar dever', NULL),
+  ('foobar developers', 'foobar devers', NULL),
+  ('foobar developing', 'foobar deving', NULL),
+  ('foobar developed', 'foobar deved', NULL),
   /* development */
+  ('foobar development', 'foobar dev', NULL),
+  ('FooBar Development', 'FooBar dev', NULL),
+  ('foo development bar', 'foo dev bar', NULL),
+  ('development foobar', 'dev foobar', NULL),
+  ('foobar developments', 'foobar devs', NULL),
+  ('developments foobar', 'devs foobar', NULL),
+  ('foo (development) bar', 'foo (dev) bar', NULL),
+  ('foo (developments) bar', 'foo (devs) bar', NULL),
+  ('foodevelopment bar', 'foodev bar', NULL),
+  ('foo redevelopment bar', 'foo redev bar', NULL),
+  ('Foobar Developpement', 'Foobar devpement', 'Developpement - 2 p'),
+  ('foobar developpement', 'foobar devpement', 'developpement - 2 p'),
+  ('foobar redevelopement', 'foobar redevement', 'developement - additional e'),
   /* financial */
   /* generation */
   /* government */
