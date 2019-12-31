@@ -153,7 +153,7 @@ CREATE TEMPORARY TABLE name_abbreviation_tests (
   ('foo co-generation bar', 'foo co-gen bar', 'cogeneration'),
   /* government */
   ('foobar government', 'foobar$govt', NULL),
-  ('FooBar government', 'FooBar$govt', NULL),
+  ('FooBar Government', 'FooBar$govt', NULL),
   ('Foo Government Department of Bar', 'Foo govt Department of Bar', NULL),
   ('Government of Foobar', 'govt of Foobar', NULL),
   ('government of foobar', 'govt of foobar', NULL),
@@ -164,6 +164,20 @@ CREATE TEMPORARY TABLE name_abbreviation_tests (
   ('foo intergovernmental bar', 'foo intergovtal bar', 'intergovernmental'),
   ('foo governmentbar', 'foo govtbar', NULL),
   /* group */
+  ('foobar group', 'foobar grp', NULL),
+  ('FooBar Group', 'FooBar grp', NULL),
+  ('group foobar', 'grp foobar', NULL),
+  ('Group FooBar', 'grp FooBar', NULL),
+  ('foo group bar', 'foo grp bar', NULL),
+  ('foo (group) bar', 'foo (grp) bar', NULL),
+  ('Foo Group Bar', 'Foo grp Bar', NULL),
+  ('foogroup bar', 'foogrp bar', NULL),
+  ('foo-group bar', 'foo-grp bar', NULL),
+  ('foo groupbar', 'foo grpbar', NULL),
+  ('FooBar Groups', 'FooBar grps', 'groups - plural'),
+  ('Groupe FooBar', 'grpe FooBar', 'groupe - e'),
+  ('Groupement FooBar', 'grpement FooBar', 'groupement - ement'),
+  ('Groupama', 'grpama', 'groupama - ama'),
   /* holding */
   /* holdings */
   /* incorporated */
