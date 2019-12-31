@@ -204,7 +204,17 @@ CREATE TEMPORARY TABLE name_abbreviation_tests (
   ('FooBar (Holdings)', 'FooBar (hldgs)', NULL),
   ('foo (holdings) bar', 'foo (hldgs) bar', NULL),
   /* incorporated */
+  ('foobar incorporated', 'foobar$inc', NULL),
+  ('FooBar Incorporated', 'FooBar$inc', NULL),
+  ('Foo Incorporated Bar', 'Foo inc Bar', NULL),
   /* international */
+  ('foobar international', 'foobar$intl', NULL),
+  ('FooBar International', 'FooBar$intl', NULL),
+  ('foo international bar', 'foo intl bar', NULL),
+  ('Foo International Bar', 'Foo intl Bar', NULL),
+  ('International Foobar', 'intl Foobar', NULL),
+  ('Internationale Foobar', 'intle Foobar', 'Internationale - e'),
+  ('Foobar-International', 'Foobar-intl', NULL),
   /* investment */
   /* limited\s+partnership */
   /* limited */
@@ -265,14 +275,27 @@ CREATE TEMPORARY TABLE name_abbreviation_tests (
   /* \s+hldgs$ */
   ('foobar hldgs', 'foobar$hldgs', NULL),
   ('foobar Hldgs', 'foobar$hldgs', NULL),
-  ('Foo Hldgs Bar', 'Foo hldgs Bar', NULL),
-  ('foobar (Hldgs)', 'foobar (hldgs)', NULL),
+  ('Foo Hldgs Bar', 'Foo Hldgs Bar',  'hldgs in middle of string not altered'),
+  ('foobar (Hldgs)', 'foobar (Hldgs)', 'hldgs in parens not altered'),
   ('foobar hldg', 'foobar hldg', 'hldg - no s'),
   ('foobar Hldg', 'foobar Hldg', 'hldg - no s'),
   ('Foo Hldg Bar', 'Foo Hldg Bar', 'hldg - no s'),
   ('Foo Shiphldg Bar', 'Foo Shiphldg Bar', 'hldg - no s'),
   /* \s+inc$ */
+  ('foobar inc', 'foobar$inc', NULL),
+  ('Foobar Inc', 'Foobar$inc', NULL),
+  ('Foobar Zinc', 'Foobar Zinc', NULL),
+  ('Foobar Dist Finc', 'Foobar Dist Finc', NULL),
+  ('foo inc bar', 'foo inc bar', NULL),
+  ('Incheon Foobar', 'Incheon Foobar', 'inc at start of string not replaced'),
+  ('foo DaVinci bar', 'foo DaVinci bar', 'inc in middle of string not replaced'),
   /* \s+intl$ */
+  ('foobar intl', 'foobar$intl', NULL),
+  ('Foobar Intl', 'Foobar$intl', NULL),
+  ('Intl Foobar', 'Intl Foobar', 'intl at beginning not altered'),
+  ('foo intl bar', 'foo intl bar', 'intl in middle not altered'),
+  ('Intlaero Foobar', 'Intlaero Foobar', 'intl at beginning not altered'),
+  ('foointl bar', 'foointl bar', 'intl in middle not altered'),
   /* \s+llc$ */
   /* \s+lp$ */
   /* \s+lt$ */
