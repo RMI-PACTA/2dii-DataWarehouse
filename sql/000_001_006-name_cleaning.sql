@@ -29,7 +29,7 @@ INSERT INTO etl.company_name_abbreviations (
 ('berhad', 'bhd', 'ig'),
 ('company', 'co', 'ig'),
 ('corporation', 'corp', 'ig'),
-('designated\s+activity\s+company', 'dac', 'ig'),
+('designated\s+activity[\s\$]+(co|company)', 'dac', 'ig'),
 ('develop', 'dev', 'ig'),
 ('development', 'dev', 'ig'),
 ('financial', 'fin', 'ig'),

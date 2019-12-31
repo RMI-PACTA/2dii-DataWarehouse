@@ -99,12 +99,16 @@ CREATE TEMPORARY TABLE name_abbreviation_tests (
   ('foobar corporation', 'foobar$corp', NULL),
   ('FooBar Corporation', 'FooBar$corp', NULL),
   ('foobar corporation private', 'foobar corp private', NULL),
-  ('FooBar Corporation Private', 'FooBar corp private', NULL),
+  ('FooBar Corporation Private', 'FooBar corp Private', NULL),
   ('foobar (corporation)', 'foobar (corp)', NULL),
-  ('corporation foobar ', 'corp foobar', NULL),
+  ('corporation foobar', 'corp foobar', NULL),
   ('foobar bancorporation', 'foobar bancorp', NULL),
   ('foobar incorporation', 'foobar incorp', NULL),
   /* designated\s+activity\s+company */
+  ('foobar designated activity company', 'foobar$dac', NULL),
+  ('Foobar Designated Activity Company', 'Foobar$dac', NULL),
+  ('foobar designated activity co', 'foobar$dac', 'company collapses to co'),
+  ('Foobar Designated Activity Co', 'Foobar$dac', 'company collapses to co'),
   /* develop */
   /* development */
   /* financial */
@@ -159,6 +163,12 @@ CREATE TEMPORARY TABLE name_abbreviation_tests (
   ('foo corp bar', 'foo corp bar',  'do not replace corp in middle of string'),
   /* \s+cv$ */
   /* \s+dac$ */
+  ('foobar dac', 'foobar$dac', NULL),
+  ('Foobar Dac', 'Foobar$dac', NULL),
+  ('Foobar	Dac', 'Foobar$dac', 'tab whitespace'),
+  ('Big Bad Ac', 'Big Bad Ac', '''d ac'' does not replace on dac'),
+  ('Foodac', 'Foodac', NULL),
+  ('foo dac bar', 'foo dac bar', NULL),
   /* \s+govt$ */
   /* \s+hldgs$ */
   /* \s+inc$ */
