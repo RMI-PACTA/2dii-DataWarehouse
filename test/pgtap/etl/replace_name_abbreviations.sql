@@ -95,6 +95,11 @@ CREATE TEMPORARY TABLE name_abbreviation_tests (
   ('Company Foobar', 'co Foobar', NULL),
   ('Foo BarCompany', 'Foo Barco', '~* company, !~* \scompany'),
   ('foo barcompany', 'foo barco', NULL),
+  ('foobar companies', 'foobar companies', 'companies - plural'),
+  ('Foobar Companies', 'Foobar Companies', 'Companies - plural'),
+  ('foobar companhia', 'foobar companhia', 'companhia'),
+  ('foobar compania', 'foobar compania', 'compania'),
+  ('foobar companie', 'foobar companie', 'companie'),
   /* corporation */
   ('foobar corporation', 'foobar$corp', NULL),
   ('FooBar Corporation', 'FooBar$corp', NULL),
