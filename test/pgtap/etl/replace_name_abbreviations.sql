@@ -216,11 +216,37 @@ CREATE TEMPORARY TABLE name_abbreviation_tests (
   ('Internationale Foobar', 'intle Foobar', 'Internationale - e'),
   ('Foobar-International', 'Foobar-intl', NULL),
   /* investment */
+  ('foobar investment', 'foobar invest', NULL),
+  ('FooBar Investment', 'FooBar invest', NULL),
+  ('foo investment bar', 'foo invest bar', NULL),
+  ('Foo Investment Bar', 'Foo invest Bar', NULL),
+  ('foo investments bar', 'foo invests bar', 'investments - plural'),
+  ('foo investmentfonds bar', 'foo investfonds bar', 'investmentfonds'),
+  ('Foo Co-Investment Bar', 'Foo Co-invest Bar', NULL),
   /* limited\s+partnership */
   /* limited */
   /* ltd\s+liability\s+co */
   /* partner */
+  ('foobar partner', 'foobar prt', NULL),
+  ('FooBar Partner', 'FooBar prt', NULL),
+  ('foo partner bar', 'foo prt bar', NULL),
+  ('Foo Partner Bar', 'Foo prt Bar', NULL),
+  ('Foo Multipartner Bar', 'Foo Multiprt Bar', 'Multipartner'),
+  ('Foo Partnerre Bar', 'Foo prtre Bar', 'Partnerre'),
+  ('Foo Aviapartner Bar', 'Foo Aviaprt Bar', 'Aviapartner'),
+  ('Foopartner Bar', 'Fooprt Bar', NULL),
+  ('Foo Partnerbar', 'Foo prtbar', NULL),
+  ('Foopartnerbar', 'Fooprtbar', NULL),
   /* partners */
+  ('foobar partners', 'foobar prt', NULL),
+  ('FooBar Partners', 'FooBar prt', NULL),
+  ('foo partners bar', 'foo prt bar', NULL),
+  ('Foo Partners Bar', 'Foo prt Bar', NULL),
+  ('Partners Foobar', 'prt Foobar', NULL),
+  ('foobar partnership', 'foobar prthip', 'partnership'),
+  ('foobar partnerships', 'foobar prthips', 'partnerships - plural'),
+  ('foopartners bar', 'fooprt bar', '~* \Spartners'),
+  ('foo-partners bar', 'foo-prt bar', '~* \Spartners'),
   /* public\s+ltd\s+co */
   /* resource */
   /* resources */
