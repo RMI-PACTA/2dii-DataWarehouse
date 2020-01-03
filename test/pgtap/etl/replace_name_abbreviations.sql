@@ -228,9 +228,12 @@ CREATE TEMPORARY TABLE name_abbreviation_tests (
   ('foo investments bar', 'foo invests bar', 'investments - plural'),
   ('foo investmentfonds bar', 'foo investfonds bar', 'investmentfonds'),
   ('Foo Co-Investment Bar', 'Foo Co-invest Bar', NULL),
-  /* limited\s+partnership */
   /* limited */
-  /* ltd\s+liability\s+co */
+  ('foobar limited', 'foobar$ltd', NULL),
+  ('Foobar Limited', 'Foobar$ltd', NULL),
+  ('Limited Foobar', 'ltd Foobar', NULL),
+  ('Foo Limited Bar', 'Foo ltd Bar', NULL),
+  ('Foo Unlimited Bar', 'Foo Unltd Bar', NULL),
   /* partner */
   ('foobar partner', 'foobar prt', NULL),
   ('FooBar Partner', 'FooBar prt', NULL),
@@ -252,7 +255,6 @@ CREATE TEMPORARY TABLE name_abbreviation_tests (
   ('foobar partnerships', 'foobar prthips', 'partnerships - plural'),
   ('foopartners bar', 'fooprt bar', '~* \Spartners'),
   ('foo-partners bar', 'foo-prt bar', '~* \Spartners'),
-  /* public\s+ltd\s+co */
   /* resource */
   ('foobar resource', 'foobar res', NULL),
   ('Foobar Resource', 'Foobar res', NULL),
@@ -274,6 +276,43 @@ CREATE TEMPORARY TABLE name_abbreviation_tests (
   ('Foo shipping Bar', 'Foo shp Bar', NULL),
   ('Foo Intershipping Bar', 'Foo Intershp Bar', 'Intershipping'),
   ('Foo Shipping-Bar', 'Foo shp-Bar', NULL),
+  /* limited\s+partnership */
+  ('foobar limited partnership', 'foobar$lp', NULL),
+  ('Foobar Limited Partnership', 'Foobar$lp', NULL),
+  ('Foo Limited Partnership Bar', 'Foo lp Bar', NULL),
+  ('foobar ltd partnership', 'foobar$lp', NULL),
+  ('Foobar Ltd Partnership', 'Foobar$lp', NULL),
+  ('Foo Ltd Partnership Bar', 'Foo lp Bar', NULL),
+  ('foobar ltd partners', 'foobar ltd prt', NULL),
+  ('Foo Ltd Partners Bar', 'Foo Ltd prt Bar', NULL),
+  ('Foobar Partners Ltd', 'Foobar prt$ltd', NULL),
+  ('Foobar Partners Limited', 'Foobar prt$ltd', NULL),
+  ('Foobar Partnership Ltd', 'Foobar prthip$ltd', NULL),
+  ('Foobar Partnership Limited', 'Foobar prthip$ltd', NULL),
+  /* public\s+ltd\s+co */
+  ('foobar public limited company', 'foobar$plc', NULL),
+  ('Foobar Public Limited Company', 'Foobar$plc', NULL),
+  ('foobar public limited co', 'foobar$plc', NULL),
+  ('Foobar Public Limited Co', 'Foobar$plc', NULL),
+  ('foobar public ltd company', 'foobar$plc', NULL),
+  ('Foobar Public Ltd Company', 'Foobar$plc', NULL),
+  ('Foobar Public Company Limited', 'Foobar Public co$ltd', NULL),
+  ('Foobar Company Public Limited', 'Foobar co Public$ltd', NULL),
+  ('Foobar Company Limited Public', 'Foobar co ltd Public', NULL),
+  ('Foobar Limited Public Company', 'Foobar ltd Public$co', NULL),
+  ('Foobar Limited Company Public', 'Foobar ltd co Public', NULL),
+  /* ltd\s+liability\s+co */
+  ('foobar limited liability company', 'foobar$llc', NULL),
+  ('Foobar Limited Liability Company', 'Foobar$llc', NULL),
+  ('foobar limited liability co', 'foobar$llc', NULL),
+  ('Foobar Limited Liability Co', 'Foobar$llc', NULL),
+  ('foobar ltd liability company', 'foobar$llc', NULL),
+  ('Foobar Ltd Liability Company', 'Foobar$llc', NULL),
+  ('Foobar Limited Company Liability', 'Foobar ltd co Liability', NULL),
+  ('Foobar Liability Limited Company', 'Foobar Liability ltd$co', NULL),
+  ('Foobar Liability Company Limited', 'Foobar Liability co$ltd', NULL),
+  ('Foobar Company Liability Limited', 'Foobar co Liability$ltd', NULL),
+  ('Foobar Company Limited Liability', 'Foobar co ltd Liability', NULL),
   /* \s+ag$ */
   ('foobar ag', 'foobar$ag', NULL),
   ('FooBar AG', 'FooBar$ag', NULL),
