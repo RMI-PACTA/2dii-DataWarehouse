@@ -81,8 +81,8 @@ INSERT INTO etl.company_name_abbreviations (
 
 CREATE FUNCTION etl.replace_name_abbreviations(
   string TEXT,
-  recursion SMALLINT DEFAULT 0,
-  max_recursion SMALLINT DEFAULT 5
+  max_recursion INT DEFAULT 5,
+  recursion INT DEFAULT 0
 )
 RETURNS TEXT STABLE AS $$
 DECLARE
@@ -117,7 +117,11 @@ BEGIN
   /* if there was a change, run the process again, to ensure we are catching */
   /* all the simplifications */
   IF string != original_string THEN
-    string = etl.replace_name_abbreviations(string, (recursion + 1)::SMALLINT);
+    string = etl.replace_name_abbreviations(
+      string := string,
+      max_recursion := max_recursion,
+      recursion := (recursion + 1)::INT
+    );
   END IF;
   /* return the value after all recursions. the lowest level recursion will */
   /* propogate up to the top through the returns */

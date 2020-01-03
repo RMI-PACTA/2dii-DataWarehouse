@@ -377,7 +377,6 @@ CREATE TEMPORARY TABLE name_abbreviation_tests (
   ('foobar co', 'foobar$co', NULL),
   ('Foobar Co', 'Foobar$co', NULL),
   ('Foobar	Co', 'Foobar$co', 'tab whitespace'),
-  ('Foobar & Co', 'Foobar &$co', NULL),
   ('foocobar', 'foocobar', NULL),
   ('foo co bar', 'foo co bar', NULL),
   /* \s+corp$ */
@@ -567,12 +566,16 @@ CREATE TEMPORARY TABLE name_abbreviation_tests (
   ('Jyväskylä', 'Jyväskylä', 'unicode characters not affected'),
   ('Ä änd B', 'Ä änd B', 'unicode characters not affected'),
   ('Ä and B', 'Ä & B', 'unicode characters not affected'),
-
+  /* common interaction terms */
+  ('Foobar And Company', 'Foobar &$co', NULL),
+  ('Foobar & Company', 'Foobar &$co', NULL),
+  ('Foobar And Co', 'Foobar &$co', NULL),
+  ('Foobar & Co', 'Foobar &$co', NULL),
   /* empty string */
   ('', '', 'Empty string')
 ;
 
-  SELECT plan(count(*)::INT) FROM name_abbreviation_tests;
+  SELECT plan(count(*)::INT + 4) FROM name_abbreviation_tests;
 
   SELECT is(
     etl.replace_name_abbreviations(test_string),
@@ -581,5 +584,42 @@ CREATE TEMPORARY TABLE name_abbreviation_tests (
       quote_literal(test_string) || ' -> ' ||
       quote_literal(expected)
   ) FROM name_abbreviation_tests;
+
+  SELECT is(
+    etl.replace_name_abbreviations(
+      'Foobar Company',
+      5
+    ),
+    'Foobar$co',
+    'test passing recursion arguments by POSITION'
+  );
+
+  SELECT is(
+    etl.replace_name_abbreviations(
+      string := 'Foobar Company',
+      max_recursion := 5
+    ),
+    'Foobar$co',
+    'test passing recursion arguments by name'
+  );
+
+  SELECT is(
+    etl.replace_name_abbreviations(
+      string := 'Foobar Companympany',
+      max_recursion := 5
+    ),
+    'Foobar$co',
+    'test second recursion'
+  );
+
+  SELECT throws_ok(
+    'SELECT etl.replace_name_abbreviations(
+      string := ''Foobar Companympany'',
+      max_recursion := 0
+    )',
+    'Name replacement recursion exceeded',
+    'Test that limiting number OF recursion works - NO recursion'
+  );
+
 
 ROLLBACK;
