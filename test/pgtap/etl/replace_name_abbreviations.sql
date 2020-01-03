@@ -254,8 +254,26 @@ CREATE TEMPORARY TABLE name_abbreviation_tests (
   ('foo-partners bar', 'foo-prt bar', '~* \Spartners'),
   /* public\s+ltd\s+co */
   /* resource */
+  ('foobar resource', 'foobar res', NULL),
+  ('Foobar Resource', 'Foobar res', NULL),
+  ('Resource Foobar', 'res Foobar', NULL),
+  ('Foo Resource Bar', 'Foo res Bar', NULL),
+  ('Fooresource Bar', 'Foores Bar', NULL),
+  ('Foo Resourceful Bar', 'Foo resful Bar', 'Resourceful'),
   /* resources */
+  ('foobar resources', 'foobar res', NULL),
+  ('Foobar Resources', 'Foobar res', NULL),
+  ('Resources Foobar', 'res Foobar', NULL),
+  ('Foo Resources Bar', 'Foo res Bar', NULL),
+  ('Fooresources Bar', 'Foores Bar', NULL),
+  ('Foobar Petroresources', 'Foobar Petrores', 'Petroresources'),
   /* shipping */
+  ('foobar shipping', 'foobar shp', NULL),
+  ('Foobar Shipping', 'Foobar shp', NULL),
+  ('shipping Foobar', 'shp Foobar', NULL),
+  ('Foo shipping Bar', 'Foo shp Bar', NULL),
+  ('Foo Intershipping Bar', 'Foo Intershp Bar', 'Intershipping'),
+  ('Foo Shipping-Bar', 'Foo shp-Bar', NULL),
   /* \s+ag$ */
   ('foobar ag', 'foobar$ag', NULL),
   ('FooBar AG', 'FooBar$ag', NULL),
