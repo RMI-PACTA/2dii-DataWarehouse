@@ -90,7 +90,7 @@ DECLARE
   original_string TEXT;
 BEGIN
   /* protect against infinite recursion */
-  IF recursion >= max_recursion THEN
+  IF recursion > max_recursion THEN
     RAISE EXCEPTION 'Name replacement recursion exceeded';
   END IF;
   /* cache the original_string for later comparison */

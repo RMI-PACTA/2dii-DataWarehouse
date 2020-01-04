@@ -575,7 +575,7 @@ CREATE TEMPORARY TABLE name_abbreviation_tests (
   ('', '', 'Empty string')
 ;
 
-  SELECT plan(count(*)::INT + 4) FROM name_abbreviation_tests;
+  SELECT plan(count(*)::INT + 23) FROM name_abbreviation_tests;
 
   SELECT is(
     etl.replace_name_abbreviations(test_string),
@@ -603,23 +603,228 @@ CREATE TEMPORARY TABLE name_abbreviation_tests (
     'test passing recursion arguments by name'
   );
 
+  /* recursion | string IN  | string OUT */
+  /* 0         | Foo co Bar | Foo co Bar */
   SELECT is(
     etl.replace_name_abbreviations(
-      string := 'Foobar Companympany',
-      max_recursion := 5
+      string := 'Foo co Bar'
+      -- max_recursion default 5
     ),
-    'Foobar$co',
-    'test second recursion'
+    'Foo co Bar',
+    'test recursion x0 - Default'
+  );
+
+  SELECT is(
+    etl.replace_name_abbreviations(
+      string := 'Foo co Bar',
+      max_recursion := 0
+    ),
+    'Foo co Bar',
+    'test recursion x0'
   );
 
   SELECT throws_ok(
     'SELECT etl.replace_name_abbreviations(
-      string := ''Foobar Companympany'',
+      string := ''Foo co Bar'',
+      max_recursion := -1
+    )',
+    'Name replacement recursion exceeded',
+    'Test that limiting number OF recursion works - x0'
+  );
+
+  /* recursion | string IN       | string OUT */
+  /* 0         | Foo company Bar | Foo co Bar */
+  /* 1         | Foo co Bar      | Foo co Bar */
+  SELECT is(
+    etl.replace_name_abbreviations(
+      string := 'Foo company Bar'
+      -- max_recursion default 5
+    ),
+    'Foo co Bar',
+    'test recursion x1 - Default'
+  );
+
+  SELECT is(
+    etl.replace_name_abbreviations(
+      string := 'Foo company Bar',
+      max_recursion := 1
+    ),
+    'Foo co Bar',
+    'test recursion x1'
+  );
+
+  SELECT throws_ok(
+    'SELECT etl.replace_name_abbreviations(
+      string := ''Foo company Bar'',
       max_recursion := 0
     )',
     'Name replacement recursion exceeded',
-    'Test that limiting number OF recursion works - NO recursion'
+    'Test that limiting number OF recursion works - x0'
   );
 
+  /* recursion | string IN            | string OUT */
+  /* 0         | Foo companympany Bar | Foo company Bar */
+  /* 1         | Foo company Bar      | Foo co Bar */
+  /* 2         | Foo co Bar           | Foo co Bar */
+  SELECT is(
+    etl.replace_name_abbreviations(
+      string := 'Foo companympany Bar'
+      -- max_recursion default 5
+    ),
+    'Foo co Bar',
+    'test recursion x2 - Default'
+  );
+
+  SELECT is(
+    etl.replace_name_abbreviations(
+      string := 'Foo companympany Bar',
+      max_recursion := 2
+    ),
+    'Foo co Bar',
+    'test recursion x2'
+  );
+
+  SELECT throws_ok(
+    'SELECT etl.replace_name_abbreviations(
+      string := ''Foo companympany Bar'',
+      max_recursion := 1
+    )',
+    'Name replacement recursion exceeded',
+    'Test that limiting number OF recursion works - x2'
+  );
+
+  /* recursion | string IN                 | string OUT */
+  /* 0         | Foo companympanympany Bar | Foo companympany Bar */
+  /* 1         | Foo companympany Bar      | Foo company Bar */
+  /* 2         | Foo company Bar           | Foo co Bar */
+  /* 3         | Foo co Bar                | Foo co Bar */
+  SELECT is(
+    etl.replace_name_abbreviations(
+      string := 'Foo companympanympany Bar'
+      -- max_recursion default 5
+    ),
+    'Foo co Bar',
+    'test recursion x3 - Default'
+  );
+
+  SELECT is(
+    etl.replace_name_abbreviations(
+      string := 'Foo companympanympany Bar',
+      max_recursion := 3
+    ),
+    'Foo co Bar',
+    'test recursion x3'
+  );
+
+  SELECT throws_ok(
+    'SELECT etl.replace_name_abbreviations(
+      string := ''Foo companympanympany Bar'',
+      max_recursion := 2
+    )',
+    'Name replacement recursion exceeded',
+    'Test that limiting number OF recursion works - x3'
+  );
+
+  /* recursion | string IN                      | string OUT */
+  /* 0         | Foo companympanympanympany Bar | Foo companympanympany Bar */
+  /* 1         | Foo companympanympany Bar      | Foo companympany Bar */
+  /* 2         | Foo companympany Bar           | Foo company Bar */
+  /* 3         | Foo company Bar                | Foo co Bar */
+  /* 4         | Foo co Bar                     | Foo co Bar */
+  SELECT is(
+    etl.replace_name_abbreviations(
+      string := 'Foo companympanympanympany Bar'
+      -- max_recursion default 5
+    ),
+    'Foo co Bar',
+    'test recursion x4 - Default'
+  );
+
+  SELECT is(
+    etl.replace_name_abbreviations(
+      string := 'Foo companympanympanympany Bar',
+      max_recursion := 4
+    ),
+    'Foo co Bar',
+    'test recursion x4'
+  );
+
+  SELECT throws_ok(
+    'SELECT etl.replace_name_abbreviations(
+      string := ''Foo companympanympanympany Bar'',
+      max_recursion := 3
+    )',
+    'Name replacement recursion exceeded',
+    'Test that limiting number OF recursion works - x4'
+  );
+
+  /* recursion | string IN                           | string OUT */
+  /* 0         | Foo companympanympanympanympany Bar | Foo companympanympanympany Bar */
+  /* 1         | Foo companympanympanympany Bar      | Foo companympanympany Bar */
+  /* 2         | Foo companympanympany Bar           | Foo companympany Bar */
+  /* 3         | Foo companympany Bar                | Foo company Bar */
+  /* 4         | Foo company Bar                     | Foo co Bar */
+  /* 5         | Foo co Bar                          | Foo co Bar */
+  SELECT is(
+    etl.replace_name_abbreviations(
+      string := 'Foo companympanympanympanympany Bar'
+      -- max_recursion default 5
+    ),
+    'Foo co Bar',
+    'test recursion x5 - Default'
+  );
+
+  SELECT is(
+    etl.replace_name_abbreviations(
+      string := 'Foo companympanympanympanympany Bar',
+      max_recursion := 5
+    ),
+    'Foo co Bar',
+    'test recursion x5'
+  );
+
+  SELECT throws_ok(
+    'SELECT etl.replace_name_abbreviations(
+      string := ''Foo companympanympanympanympany Bar'',
+      max_recursion := 4
+    )',
+    'Name replacement recursion exceeded',
+    'Test that limiting number OF recursion works - x5'
+  );
+
+  /* recursion | string IN                                | string OUT */
+  /* 0         | Foo companympanympanympanympanympany Bar | Foo companympanympanympanympany Bar */
+  /* 1         | Foo companympanympanympanympany Bar      | Foo companympanympanympany Bar */
+  /* 2         | Foo companympanympanympany Bar           | Foo companympanympany Bar */
+  /* 3         | Foo companympanympany Bar                | Foo companympany Bar */
+  /* 4         | Foo companympany Bar                     | Foo company Bar */
+  /* 5         | Foo company Bar                          | Foo co Bar */
+  /* 6         | Foo co Bar                               | Foo co Bar */
+  SELECT throws_ok(
+    'SELECT etl.replace_name_abbreviations(
+      string := ''Foo companympanympanympanympanympany Bar'',
+      max_recursion := 5
+    )',
+    'Name replacement recursion exceeded',
+    'test recursion x6 - Default'
+  );
+
+  SELECT is(
+    etl.replace_name_abbreviations(
+      string := 'Foo companympanympanympanympanympany Bar',
+      max_recursion := 6
+    ),
+    'Foo co Bar',
+    'test recursion x6'
+  );
+
+  SELECT throws_ok(
+    'SELECT etl.replace_name_abbreviations(
+      string := ''Foo companympanympanympanympanympany Bar'',
+      max_recursion := 5
+    )',
+    'Name replacement recursion exceeded',
+    'Test that limiting number OF recursion works - x6'
+  );
 
 ROLLBACK;
