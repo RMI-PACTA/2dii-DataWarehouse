@@ -74,7 +74,7 @@ BEGIN;
   SELECT is(
     to_replace,
     lower(to_replace),
-    'String to to find for replacement should be lowercase'
+    'String to find for replacement should be lowercase'
   ) FROM etl.company_name_abbreviations;
 
   SELECT is(
