@@ -11,14 +11,5 @@ jobs:
 
     steps:
       - uses: actions/checkout@v1
-      - name: Build docker image
-        run: docker-compose build
       - name: Run unit tests
-        run: |
-          docker-compose \
-          -f docker-compose.yml \
-          -f docker-compose.override.yml \
-          -f docker-compose.test.yml \
-          up \
-          --exit-code-from app \
-          app
+        run: make test_python_unit_test.log

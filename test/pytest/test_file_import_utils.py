@@ -3,7 +3,21 @@ import pandas as pd
 import twodii_datawarehouse.file_import.utils as utils
 
 # Test frame with header on first row, no footers
-df_test_1 = pd.DataFrame([
+df_test_1a = pd.DataFrame([
+    ["intA", "strB", "floatC", "intD", "strE", "floatF"],
+    [4, "foo", 1.23, 1, "", 4.8],
+    [3, "bar", 1.33, 2, "stringX", 4.8],
+    [10, "baz", 1.43, 0, "stringY", 2.8],
+    [8, "bax", "", -1, "", ""],
+    ["", "foo", 1.53, "", "stringZ", 0.8],
+    [4, "", 1.63, 1, "", ""]
+])
+
+# Test frame with header on first row, no footers
+df_test_1b = pd.DataFrame([
+    ["Sample", "", "", "", "", ""],
+    ["", "Header", "", "", "", ""],
+    ["", "", "Info", "", "", ""],
     ["intA", "strB", "floatC", "intD", "strE", "floatF"],
     [4, "foo", 1.23, 1, "", 4.8],
     [3, "bar", 1.33, 2, "stringX", 4.8],
@@ -16,11 +30,20 @@ df_test_1 = pd.DataFrame([
 df_test_1_names = ["intA", "strB", "floatC", "intD", "strE", "floatF"]
 
 
-def test_find_simple_header():
+def test_find_simple_header_top_row():
     """Test header finding on a simple dataframe."""
     header_row, header_names = utils.find_header_row(
-        df=df_test_1,
+        df=df_test_1a,
         columns_name_list=df_test_1_names
     )
     assert header_row == 0
+    assert header_names == ["inta", "strb", "floatc", "intd", "stre", "floatf"]
+
+def test_find_simple_header_lower_row():
+    """Test header finding on a simple dataframe."""
+    header_row, header_names = utils.find_header_row(
+        df=df_test_1b,
+        columns_name_list=df_test_1_names
+    )
+    assert header_row == 3
     assert header_names == ["inta", "strb", "floatc", "intd", "stre", "floatf"]

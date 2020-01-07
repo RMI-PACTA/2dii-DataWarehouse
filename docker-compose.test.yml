@@ -2,4 +2,7 @@
 version: "3.7"
 services:
   app:
-    command: ["wait-for.sh", "db:5432", "--", "pytest", "/usr/src/test/pytest"]
+    command: ["pytest", "/tmp/test/pytest"]
+    volumes:
+      - "${PWD}/test/data_files/:/tmp/data_files"
+      - "${PWD}/test:/tmp/test"
