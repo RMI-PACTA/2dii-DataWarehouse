@@ -1,13 +1,51 @@
 BEGIN;
 
-  /* TODO: Write tests for etl.clean_whitespace */
-
   CREATE TEMPORARY TABLE unicode_tests (
     codepoint TEXT,
     unicode TEXT,
     romanized TEXT,
     simplified TEXT,
     pre_simplified BOOLEAN
+  );
+
+  /* ensure that the test data is correct by using constraints */
+  /* check that the uniciode string actually contains the listed codepoint. */ 
+  ALTER TABLE unicode_tests
+  ADD CONSTRAINT unicode_tests_test_string_contains_codepoint CHECK (
+    unicode ~ etl.regexp_escape(chr(('x' ||codepoint)::bit(16)::int))
+  );
+
+  /* check that the romanized string does actually contains the listed codepoint. */
+  ALTER TABLE unicode_tests
+  ADD CONSTRAINT unicode_tests_romanized_string_contains_codepoint CHECK (
+    CASE
+      WHEN codepoint >= '0020' AND codepoint <= '007E'
+        THEN romanized ~ etl.regexp_escape(chr(('x' ||codepoint)::bit(16)::int))
+      ELSE romanized !~ etl.regexp_escape(chr(('x' ||codepoint)::bit(16)::int))
+    END
+  );
+
+  /* check that the simplified string does actually contains the listed codepoint. */
+  ALTER TABLE unicode_tests
+  ADD CONSTRAINT unicode_tests_simplified_string_contains_codepoint CHECK (
+    CASE
+      WHEN pre_simplified
+        THEN simplified ~ etl.regexp_escape(chr(('x' ||codepoint)::bit(16)::int))
+      ELSE simplified !~ etl.regexp_escape(chr(('x' ||codepoint)::bit(16)::int))
+    END
+  );
+
+  /* check that the uniciode string actually contains the listed codepoint. */ 
+  ALTER TABLE unicode_tests
+  ADD CONSTRAINT unicode_tests_test_romanized_is_printable CHECK (
+    /* space to tilde is ASCII printible range */
+    romanized ~ '^[ -~ ]*$'
+  );
+
+  /* check that the uniciode string actually contains the listed codepoint. */ 
+  ALTER TABLE unicode_tests
+  ADD CONSTRAINT unicode_tests_test_simplified_is_simplified CHECK (
+    simplified ~ '^[a-z0-9 ''&]*$' --Lowers, digits, Ampersand, space, apostrophe
   );
 	
   INSERT INTO unicode_tests (
@@ -191,8 +229,7 @@ BEGIN;
   ('20AC', '€9001', 'EUR9001', '9001', false),
   ('20AC', 'Sw€€t', 'SwEUREURt', 'swt', false)
   ;
-
-  SELECT plan(3 + COUNT(*)::INT * 9) FROM unicode_tests;
+  SELECT plan(3 + COUNT(*)::INT * 4) FROM unicode_tests;
 
    SELECT has_function( 
     'etl', 'has_nonsimplified_characters', 
@@ -208,57 +245,6 @@ BEGIN;
     'etl', 'simplify_unicode', 
      'etl.regexp_escape function exists' 
    ); 
-
-  -----Test the test cases, to make sure we are covering what we want.-----
-
-   /* check that the uniciode string actually contains the listed codepoint. */ 
-  SELECT matches(
-    unicode, etl.regexp_escape(chr(('x' ||codepoint)::bit(16)::int)),
-    'Test the test: unicode string contains the listed codepoint \u' ||codepoint || ': ' || quote_literal(unicode)
-  ) FROM unicode_tests;
-
-  /* check that the romanized string does actually contains the listed codepoint. */
-  SELECT matches(
-    romanized, etl.regexp_escape(chr(('x' ||codepoint)::bit(16)::int)),
-    'Test the test: romanized string contains the pre-simplified listed codepoint \u' ||codepoint || ': ' || quote_literal(romanized)
-  ) FROM unicode_tests
-  WHERE codepoint >= '0020'
-  AND codepoint <= '007E'; --Romanized string are the ascii range
-
-  /* check that the romanized string does not actually contains the listed codepoint. */
-  SELECT doesnt_match(
-    romanized, etl.regexp_escape(chr(('x' ||codepoint)::bit(16)::int)),
-    'Test the test: romanized string does not contain the listed codepoint \u' ||codepoint || ': ' || quote_literal(romanized)
-  ) FROM unicode_tests
-  WHERE codepoint < '0020'
-  OR codepoint > '007E'; --Romanized string are the ascii range
-
-  /* check that the simplified string does actually contains the listed codepoint. */
-  SELECT matches(
-    simplified, etl.regexp_escape(chr(('x' ||codepoint)::bit(16)::int)),
-    'Test the test: simplified string contains the pre-simplified listed codepoint \u' ||codepoint || ': ' || quote_literal(simplified)
-  ) FROM unicode_tests
-  WHERE pre_simplified;
-
-  /* check that the simplified string does not actually contains the listed codepoint. */
-  SELECT doesnt_match(
-    simplified, etl.regexp_escape(chr(('x' ||codepoint)::bit(16)::int)),
-    'Test the test: simplified string does not contain the listed codepoint \u' ||codepoint || ': ' || quote_literal(simplified)
-  ) FROM unicode_tests
-  WHERE NOT pre_simplified;
-
-  /* check that the simplified string does not have uppercase letters. */
-  SELECT matches(
-    /* space to tilde is ASCII printible range */
-    romanized, '^[ -~ ]*$',
-    'Test the test: romanized string ONLY has restricted subset \u' ||codepoint || ': ' || quote_literal(romanized)
-  ) FROM unicode_tests;
-
-  /* check that the simplified string does not have uppercase letters. */
-  SELECT matches(
-    simplified, '^[a-z0-9 ''&]*$', --Lowers, digits, Ampersand, space, apostrophe
-    'Test the test: simplified string only has restricted subset \u' ||codepoint || ': ' || quote_literal(simplified)
-  ) FROM unicode_tests;
 
   /* ------ Run tests against the functions ------ */
 
