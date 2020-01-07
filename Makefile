@@ -4,27 +4,34 @@
 sql_deps := $(wildcard sql/*.sql) \
 	$(shell find test/pgtap -type f -name '*.sql') \
 	app/twodii_datawarehouse.py \
-	app/twodii_datawarehouse/migrations.py
+	app/twodii_datawarehouse/migrations.py \
+	Dockerfile \
+	docker-compose.yml
+
+pgtap_deps := $(sql_deps) docker-compose.test_pgtap.yml
+
 # all python files in the app and pytest directories
 py_unit_deps := $(shell find app/ -type f -name '*.py') \
-	$(shell find test/pytest -type f -name '*.py')
+	$(shell find test/pytest -type f -name '*.py') \
+	Dockerfile \
+	docker-compose.yml
 
 .PHONY: test clean
 
 test: test_pgtap_local test_python_unit_test.log
 
 # -------------------------------- python unit --------------------------------
-test_python_unit_test.log: $(py_unit_deps)
+test_python_unit_test.log: $(py_unit_deps) docker-compose.test_python_unit.yml
 	docker-compose \
 		-f docker-compose.yml \
-		-f docker-compose.test.yml \
+		-f docker-compose.test_python_unit.yml \
 		up \
 		--exit-code-from app \
 		app \
 		| tee test_python_unit_test.log
 
 # ----------------------------------- pgTap -----------------------------------
-test_pgtap.log: $(sql_deps)
+test_pgtap.log: $(pgtap_deps)
 	# Prepare the test DB
 	docker-compose \
 		-f docker-compose.yml \
@@ -48,7 +55,7 @@ test_pgtap.log: $(sql_deps)
 		db_check \
 		| tee -a test_pgtap.log
 
-clean_test_pgtap.log: $(sql_deps)
+clean_test_pgtap.log: $(pgtap_deps)
 	docker-compose \
 		-f docker-compose.yml \
 		-f docker-compose.test_pgtap.yml \
