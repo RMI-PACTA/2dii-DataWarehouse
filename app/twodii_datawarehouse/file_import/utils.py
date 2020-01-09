@@ -26,11 +26,11 @@ def find_header_row(
     best_header_match = 0
     header_row = 0
     # loop across the rows to find the one which has the best match to the
-    # listed comlumn names in the sql table.
+    # listed column names in the sql table.
     for k, v in df.iterrows():
         # Check if we've passed our number of rows limit
         if k == rows_to_search:
-            break
+            raise Exception(f"Header not found in {rows_to_search} rows")
         # Check if our best match is good enough
         if best_header_match / df.shape[1] > stop_threshold:
             break
@@ -41,10 +41,10 @@ def find_header_row(
         for x in columns_name_list:
             if x.casefold() in row_clean:
                 header_match += 1
-            if header_match > best_header_match:
-                best_header_match = header_match
-                header_row = k
-                header_names = row_clean
+        if header_match > best_header_match:
+            best_header_match = header_match
+            header_row = k
+            header_names = row_clean
     return header_row, header_names
 
 

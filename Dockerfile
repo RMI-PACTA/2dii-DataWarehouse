@@ -24,7 +24,7 @@ COPY app/ ./
 COPY sql/ /usr/src/sql/
 
 RUN groupadd -r twodii && useradd --no-log-init -r -g twodii twodii
-RUN chown -R twodii: /tmp /usr/src/app
+RUN chown -R twodii: /tmp /usr/src/
 USER twodii
 
 CMD [ \

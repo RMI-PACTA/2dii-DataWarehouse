@@ -26,6 +26,8 @@ test_python_unit_test.log: $(py_unit_deps) docker-compose.test_python_unit.yml
 		-f docker-compose.yml \
 		-f docker-compose.test_python_unit.yml \
 		up \
+		--abort-on-container-exit \
+		--build \
 		--exit-code-from app \
 		app \
 		| tee test_python_unit_test.log
