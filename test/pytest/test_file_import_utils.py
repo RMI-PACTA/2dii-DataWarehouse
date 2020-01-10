@@ -116,6 +116,15 @@ def test_find_simple_header_throw_exception_partial_match():
     assert str(excinfo.value) == "Header not found in 3 rows"
 
 
+def test_find_simple_header_search_exact_rows():
+    with pytest.raises(Exception) as excinfo:
+        utils.find_header_row(
+            df=df_test_1c,
+            columns_name_list=df_test_1_names,
+            rows_to_search=12
+        )
+    assert str(excinfo.value) == "Header not found in 12 rows"
+
 
 def test_find_simple_header_rows_to_test_15():
     header_row, header_names = utils.find_header_row(

@@ -29,11 +29,8 @@ def find_header_row(
     # listed column names in the sql table.
     for k, v in df.iterrows():
         # Check if we've passed our number of rows limit
-        if k == rows_to_search:
+        if k >= rows_to_search:
             raise Exception(f"Header not found in {rows_to_search} rows")
-        # Check if our best match is good enough
-        if best_header_match / df.shape[1] > stop_threshold:
-            break
         # casefold is a more aggressive version of lower, and replace the
         # spaces with underscores
         row_clean = [str(x).casefold().replace(" ", "_") for x in v.values]
@@ -45,6 +42,9 @@ def find_header_row(
             best_header_match = header_match
             header_row = k
             header_names = row_clean
+        # Check if our best match is good enough
+        if best_header_match / df.shape[1] > stop_threshold:
+            break
     return header_row, header_names
 
 
