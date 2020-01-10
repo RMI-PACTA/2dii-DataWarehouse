@@ -3,7 +3,7 @@ import numpy as np
 import numpy.testing as npt
 import pandas as pd
 import pytest
-import twodii_datawarehouse.file_import.utils as utils
+import twodii_datawarehouse.file_import.df_utils as dfu
 
 # Setup test info for headers
 df_test_names = ["intA", "strB", "floatC", "intD", "strE", "floatF"]
@@ -78,7 +78,7 @@ df_test_multiple_headers = pd.DataFrame([
 
 # ---------------------------- find_header_row ----------------------------
 def test_find_simple_header_top_row():
-    header_row, header_names = utils.find_header_row(
+    header_row, header_names = dfu.find_header_row(
         df=df_test_simple,
         columns_name_list=df_test_names
     )
@@ -87,7 +87,7 @@ def test_find_simple_header_top_row():
 
 
 def test_find_simple_header_fourth_row():
-    header_row, header_names = utils.find_header_row(
+    header_row, header_names = dfu.find_header_row(
         df=df_test_small_header,
         columns_name_list=df_test_names
     )
@@ -97,7 +97,7 @@ def test_find_simple_header_fourth_row():
 
 def test_find_simple_header_throw_exception_default_rows():
     with pytest.raises(Exception) as excinfo:
-        utils.find_header_row(
+        dfu.find_header_row(
             df=df_test_long_header,
             columns_name_list=df_test_names
         )
@@ -106,7 +106,7 @@ def test_find_simple_header_throw_exception_default_rows():
 
 def test_find_simple_header_throw_exception_limited_rows():
     with pytest.raises(Exception) as excinfo:
-        utils.find_header_row(
+        dfu.find_header_row(
             df=df_test_long_header,
             columns_name_list=df_test_names,
             rows_to_search=5
@@ -116,7 +116,7 @@ def test_find_simple_header_throw_exception_limited_rows():
 
 def test_find_simple_header_throw_exception_partial_match():
     with pytest.raises(Exception) as excinfo:
-        utils.find_header_row(
+        dfu.find_header_row(
             df=df_test_multiple_headers,
             columns_name_list=df_test_names,
             rows_to_search=3
@@ -126,7 +126,7 @@ def test_find_simple_header_throw_exception_partial_match():
 
 def test_find_simple_header_search_exact_rows():
     with pytest.raises(Exception) as excinfo:
-        utils.find_header_row(
+        dfu.find_header_row(
             df=df_test_long_header,
             columns_name_list=df_test_names,
             rows_to_search=12
@@ -135,7 +135,7 @@ def test_find_simple_header_search_exact_rows():
 
 
 def test_find_simple_header_rows_to_test_15():
-    header_row, header_names = utils.find_header_row(
+    header_row, header_names = dfu.find_header_row(
         df=df_test_long_header,
         columns_name_list=df_test_names,
         rows_to_search=15
@@ -145,7 +145,7 @@ def test_find_simple_header_rows_to_test_15():
 
 
 def test_find_simple_header_rows_to_test_none():
-    header_row, header_names = utils.find_header_row(
+    header_row, header_names = dfu.find_header_row(
         df=df_test_long_header,
         columns_name_list=df_test_names,
         rows_to_search=None
@@ -155,7 +155,7 @@ def test_find_simple_header_rows_to_test_none():
 
 
 def test_stop_at_first_header_row_above_threshold_default():
-    header_row, header_names = utils.find_header_row(
+    header_row, header_names = dfu.find_header_row(
         df=df_test_multiple_headers,
         columns_name_list=df_test_names
     )
@@ -164,7 +164,7 @@ def test_stop_at_first_header_row_above_threshold_default():
 
 
 def test_stop_at_first_header_row_above_threshold_value():
-    header_row, header_names = utils.find_header_row(
+    header_row, header_names = dfu.find_header_row(
         df=df_test_multiple_headers,
         columns_name_list=df_test_names,
         stop_threshold=(1/6)
@@ -174,7 +174,7 @@ def test_stop_at_first_header_row_above_threshold_value():
 
 
 def test_find_best_header_in_range():
-    header_row, header_names = utils.find_header_row(
+    header_row, header_names = dfu.find_header_row(
         df=df_test_multiple_headers,
         columns_name_list=df_test_names,
         stop_threshold=1
@@ -185,7 +185,7 @@ def test_find_best_header_in_range():
 
 def test_find_header_row_stop_threshold_must_be_numeric():
     with pytest.raises(TypeError) as excinfo:
-        utils.find_header_row(
+        dfu.find_header_row(
             df=df_test_multiple_headers,
             columns_name_list=df_test_names,
             stop_threshold=None
@@ -195,7 +195,7 @@ def test_find_header_row_stop_threshold_must_be_numeric():
 
 # ---------------------------- clean_header ----------------------------
 def test_clean_simple_header():
-    clean_df = utils.clean_df_header(
+    clean_df = dfu.clean_df_header(
         df=df_test_simple,
         columns_name_list=df_test_names
     )
@@ -210,7 +210,7 @@ def test_clean_simple_header():
 
 
 def test_clean_header_pass_kwargs_rows():
-    clean_df = utils.clean_df_header(
+    clean_df = dfu.clean_df_header(
         df=df_test_long_header,
         columns_name_list=df_test_names,
         rows_to_search=15
@@ -226,7 +226,7 @@ def test_clean_header_pass_kwargs_rows():
 
 
 def test_clean_multiple_headers():
-    clean_df = utils.clean_df_header(
+    clean_df = dfu.clean_df_header(
         df=df_test_multiple_headers,
         columns_name_list=df_test_names
     )
@@ -246,7 +246,7 @@ def test_clean_multiple_headers():
 
 
 def test_clean_header_pass_kwargs_threshold():
-    clean_df = utils.clean_df_header(
+    clean_df = dfu.clean_df_header(
         df=df_test_multiple_headers,
         columns_name_list=df_test_names,
         stop_threshold=1
@@ -340,42 +340,42 @@ df_test_long_footer = pd.DataFrame([
 
 # ---------------------------- find_footer_row ----------------------------
 def test_find_simple_footer():
-    footer_row = utils.find_df_footer(
+    footer_row = dfu.find_df_footer(
         df=df_test_footer_quote
     )
     assert footer_row == 7
 
 
 def test_find_simple_footer_nan():
-    footer_row = utils.find_df_footer(
+    footer_row = dfu.find_df_footer(
         df=df_test_footer_nan
     )
     assert footer_row == 7
 
 
 def test_find_simple_footer_mixed_nan():
-    footer_row = utils.find_df_footer(
+    footer_row = dfu.find_df_footer(
         df=df_test_footer_mixed
     )
     assert footer_row == 7
 
 
 def test_find_no_footer():
-    footer_row = utils.find_df_footer(
+    footer_row = dfu.find_df_footer(
         df=df_test_simple
     )
     assert footer_row is None
 
 
 def test_find_long_footer_default():
-    footer_row = utils.find_df_footer(
+    footer_row = dfu.find_df_footer(
         df=df_test_long_footer
     )
     assert footer_row is None
 
 
 def test_find_long_footer_none():
-    footer_row = utils.find_df_footer(
+    footer_row = dfu.find_df_footer(
         df=df_test_long_footer,
         rows_to_search=None
     )
@@ -383,7 +383,7 @@ def test_find_long_footer_none():
 
 
 def test_find_long_footer_value():
-    footer_row = utils.find_df_footer(
+    footer_row = dfu.find_df_footer(
         df=df_test_long_footer,
         rows_to_search=25
     )
@@ -392,35 +392,35 @@ def test_find_long_footer_value():
 
 # ---------------------------- clean_df_footer ----------------------------
 def test_clean_simple_footer():
-    clean_df = utils.clean_df_footer(
+    clean_df = dfu.clean_df_footer(
         df=df_test_footer_quote
     )
     npt.assert_array_equal(clean_df, df_test_simple)
 
 
 def test_clean_simple_footer_nan():
-    clean_df = utils.clean_df_footer(
+    clean_df = dfu.clean_df_footer(
         df=df_test_footer_nan
     )
     npt.assert_array_equal(clean_df, df_test_simple)
 
 
 def test_clean_simple_footer_mixed_nan():
-    clean_df = utils.clean_df_footer(
+    clean_df = dfu.clean_df_footer(
         df=df_test_footer_mixed
     )
     npt.assert_array_equal(clean_df, df_test_simple)
 
 
 def test_clean_no_footer():
-    clean_df = utils.clean_df_footer(
+    clean_df = dfu.clean_df_footer(
         df=df_test_simple
     )
     npt.assert_array_equal(clean_df, df_test_simple)
 
 
 def test_clean_long_footer_default():
-    clean_df = utils.clean_df_footer(
+    clean_df = dfu.clean_df_footer(
         df=df_test_long_footer
     )
     # since the footer doesn't find_df_footert in the default parameters,
@@ -429,7 +429,7 @@ def test_clean_long_footer_default():
 
 
 def test_clean_long_footer_none():
-    clean_df = utils.clean_df_footer(
+    clean_df = dfu.clean_df_footer(
         df=df_test_long_footer,
         rows_to_search=None
     )
@@ -437,7 +437,7 @@ def test_clean_long_footer_none():
 
 
 def test_clean_long_footer_value():
-    clean_df = utils.clean_df_footer(
+    clean_df = dfu.clean_df_footer(
         df=df_test_long_footer,
         rows_to_search=25
     )
@@ -497,35 +497,35 @@ df_test_empty_middle_column_header = pd.DataFrame([
 
 
 def test_clean_empty_column_no_empty():
-    clean_df = utils.clean_empty_cols(
+    clean_df = dfu.clean_empty_cols(
         df_test_simple
     )
     npt.assert_array_equal(clean_df, df_test_simple)
 
 
 def test_clean_empty_column_quote():
-    clean_df = utils.clean_empty_cols(
+    clean_df = dfu.clean_empty_cols(
         df_test_empty_column_quote
     )
     npt.assert_array_equal(clean_df, df_test_simple)
 
 
 def test_clean_empty_column_nan():
-    clean_df = utils.clean_empty_cols(
+    clean_df = dfu.clean_empty_cols(
         df_test_empty_column_nan
     )
     npt.assert_array_equal(clean_df, df_test_simple)
 
 
 def test_clean_empty_column_mixed():
-    clean_df = utils.clean_empty_cols(
+    clean_df = dfu.clean_empty_cols(
         df_test_empty_column_mixed
     )
     npt.assert_array_equal(clean_df, df_test_simple)
 
 
 def test_clean_empty_middle_column():
-    clean_df = utils.clean_empty_cols(
+    clean_df = dfu.clean_empty_cols(
         df_test_empty_middle_column
     )
     npt.assert_array_equal(clean_df, df_test_simple)
@@ -533,7 +533,7 @@ def test_clean_empty_middle_column():
 
 # the header prevents this from being recognized as empty
 def test_clean_empty_middle_column_header_unprocessed():
-    clean_df = utils.clean_empty_cols(
+    clean_df = dfu.clean_empty_cols(
         df_test_empty_middle_column_header
     )
     npt.assert_array_equal(clean_df, df_test_empty_middle_column_header)
@@ -541,11 +541,11 @@ def test_clean_empty_middle_column_header_unprocessed():
 
 # processing the headers first gives an empty column
 def test_clean_empty_middle_column_header_processed():
-    processed_headers = utils.clean_df_header(
+    processed_headers = dfu.clean_df_header(
         df_test_empty_middle_column_header,
         columns_name_list=df_test_names
     )
-    clean_df = utils.clean_empty_cols(
+    clean_df = dfu.clean_empty_cols(
         processed_headers
     )
     npt.assert_array_equal(clean_df, df_test_simple_no_header)
@@ -607,7 +607,7 @@ df_test_small_empty_header_small_footer = pd.DataFrame([
 
 # ---------------------------- clean_df ----------------------------
 def test_clean_df_simple():
-    clean_df = utils.clean_df(
+    clean_df = dfu.clean_df(
         df=df_test_simple,
         columns_name_list=df_test_names
     )
@@ -622,7 +622,7 @@ def test_clean_df_simple():
 
 
 def test_clean_df_small_header():
-    clean_df = utils.clean_df(
+    clean_df = dfu.clean_df(
         df=df_test_small_header,
         columns_name_list=df_test_names
     )
@@ -637,7 +637,7 @@ def test_clean_df_small_header():
 
 
 def test_clean_df_long_header_rows_15():
-    clean_df = utils.clean_df(
+    clean_df = dfu.clean_df(
         df=df_test_small_header,
         columns_name_list=df_test_names,
         rows_to_search=15
@@ -653,7 +653,7 @@ def test_clean_df_long_header_rows_15():
 
 
 def test_clean_df_long_header_rows_none():
-    clean_df = utils.clean_df(
+    clean_df = dfu.clean_df(
         df=df_test_small_header,
         columns_name_list=df_test_names,
         rows_to_search=None
@@ -669,7 +669,7 @@ def test_clean_df_long_header_rows_none():
 
 
 def test_clean_df_simple_footer():
-    clean_df = utils.clean_df(
+    clean_df = dfu.clean_df(
         df=df_test_footer_quote,
         columns_name_list=df_test_names
     )
@@ -684,7 +684,7 @@ def test_clean_df_simple_footer():
 
 
 def test_clean_df_simple_footer_nan():
-    clean_df = utils.clean_df(
+    clean_df = dfu.clean_df(
         df=df_test_footer_nan,
         columns_name_list=df_test_names
     )
@@ -699,7 +699,7 @@ def test_clean_df_simple_footer_nan():
 
 
 def test_clean_df_simple_footer_mixed_nan():
-    clean_df = utils.clean_df(
+    clean_df = dfu.clean_df(
         df=df_test_footer_mixed,
         columns_name_list=df_test_names
     )
@@ -714,7 +714,7 @@ def test_clean_df_simple_footer_mixed_nan():
 
 
 def test_clean_df_long_footer_none():
-    clean_df = utils.clean_df(
+    clean_df = dfu.clean_df(
         df=df_test_long_footer,
         columns_name_list=df_test_names,
         rows_to_search=None
@@ -730,7 +730,7 @@ def test_clean_df_long_footer_none():
 
 
 def test_clean_df_long_footer_value():
-    clean_df = utils.clean_df(
+    clean_df = dfu.clean_df(
         df=df_test_long_footer,
         columns_name_list=df_test_names,
         rows_to_search=25
@@ -746,7 +746,7 @@ def test_clean_df_long_footer_value():
 
 
 def test_clean_df_empty_column_quote():
-    clean_df = utils.clean_df(
+    clean_df = dfu.clean_df(
         df=df_test_empty_column_quote,
         columns_name_list=df_test_names,
         rows_to_search=25
@@ -762,7 +762,7 @@ def test_clean_df_empty_column_quote():
 
 
 def test_clean_df_empty_column_nan():
-    clean_df = utils.clean_df(
+    clean_df = dfu.clean_df(
         df=df_test_empty_column_nan,
         columns_name_list=df_test_names,
         rows_to_search=25
@@ -778,7 +778,7 @@ def test_clean_df_empty_column_nan():
 
 
 def test_clean_df_empty_column_mixed():
-    clean_df = utils.clean_df(
+    clean_df = dfu.clean_df(
         df=df_test_empty_column_mixed,
         columns_name_list=df_test_names,
         rows_to_search=25
@@ -794,7 +794,7 @@ def test_clean_df_empty_column_mixed():
 
 
 def test_clean_df_empty_middle_column():
-    clean_df = utils.clean_df(
+    clean_df = dfu.clean_df(
         df=df_test_empty_middle_column,
         columns_name_list=df_test_names,
         rows_to_search=25
@@ -810,7 +810,7 @@ def test_clean_df_empty_middle_column():
 
 
 def test_clean_df_empty_middle_column_header():
-    clean_df = utils.clean_df(
+    clean_df = dfu.clean_df(
         df=df_test_empty_middle_column_header,
         columns_name_list=df_test_names,
         rows_to_search=25
@@ -826,7 +826,7 @@ def test_clean_df_empty_middle_column_header():
 
 
 def test_clean_df_header_footer():
-    clean_df = utils.clean_df(
+    clean_df = dfu.clean_df(
         df=df_test_small_header_small_footer,
         columns_name_list=df_test_names
     )
@@ -841,7 +841,7 @@ def test_clean_df_header_footer():
 
 
 def test_clean_df_header_footer_empty():
-    clean_df = utils.clean_df(
+    clean_df = dfu.clean_df(
         df=df_test_small_header_small_footer_empty_col,
         columns_name_list=df_test_names
     )
@@ -856,7 +856,7 @@ def test_clean_df_header_footer_empty():
 
 
 def test_clean_df_empty_header_footer():
-    clean_df = utils.clean_df(
+    clean_df = dfu.clean_df(
         df=df_test_small_empty_header_small_footer,
         columns_name_list=df_test_names
     )
