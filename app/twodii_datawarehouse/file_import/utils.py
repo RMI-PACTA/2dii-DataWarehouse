@@ -79,7 +79,7 @@ def find_df_footer(
         rows_to_search = df.shape[0]
     footer_start = None
     for k, v in df.tail(rows_to_search).iterrows():
-        if all(pd.isna(v.values)):
+        if all(pd.isna(v.values) | (v.values == '')):
             footer_start = k
             break
     return footer_start

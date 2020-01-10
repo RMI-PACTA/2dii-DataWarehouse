@@ -1,4 +1,5 @@
 """Testing utilities for file import."""
+import numpy as np
 import numpy.testing as npt
 import pandas as pd
 import pytest
@@ -245,3 +246,189 @@ def test_clean_header_pass_kwargs_threshold():
         clean_df.columns,
         ["inta", "strb", "floatc", "intd", "stre", "floatf"],
     )
+
+
+# Test frame with header on first row, and footer
+df_test_footer_quote = pd.DataFrame([
+    ["intA", "strB", "floatC", "intD", "strE", "floatF"],
+    [4, "foo", 1.23, 1, "", 4.8],
+    [3, "bar", 1.33, 2, "stringX", 4.8],
+    [10, "baz", 1.43, 0, "stringY", 2.8],
+    [8, "bax", "", -1, "", ""],
+    ["", "foo", 1.53, "", "stringZ", 0.8],
+    [4, "", 1.63, 1, "", ""],
+    ["", "", "", "", "", ""],
+    ["", "", "", "", "", ""],
+    ["Footer", "text", "", "", "", ""],
+])
+
+
+# Test frame with header on first row, and footer
+df_test_footer_nan = pd.DataFrame([
+    ["intA", "strB", "floatC", "intD", "strE", "floatF"],
+    [4, "foo", 1.23, 1, "", 4.8],
+    [3, "bar", 1.33, 2, "stringX", 4.8],
+    [10, "baz", 1.43, 0, "stringY", 2.8],
+    [8, "bax", "", -1, "", ""],
+    ["", "foo", 1.53, "", "stringZ", 0.8],
+    [4, "", 1.63, 1, "", ""],
+    [np.nan, np.nan, np.nan, np.nan, np.nan, np.nan],
+    [np.nan, np.nan, np.nan, np.nan, np.nan, np.nan],
+    ["Footer", "text", "", "", "", ""],
+])
+
+
+# Test frame with header on first row, and footer
+df_test_footer_mixed = pd.DataFrame([
+    ["intA", "strB", "floatC", "intD", "strE", "floatF"],
+    [4, "foo", 1.23, 1, "", 4.8],
+    [3, "bar", 1.33, 2, "stringX", 4.8],
+    [10, "baz", 1.43, 0, "stringY", 2.8],
+    [8, "bax", "", -1, "", ""],
+    ["", "foo", 1.53, "", "stringZ", 0.8],
+    [4, "", 1.63, 1, "", ""],
+    ["", np.nan, "", np.nan, "", np.nan],
+    [np.nan, "", np.nan, "", np.nan, ""],
+    ["Footer", "text", "", "", "", ""],
+])
+
+
+# Test frame with header on first row, and footer
+df_test_2_long_footer = pd.DataFrame([
+    ["intA", "strB", "floatC", "intD", "strE", "floatF"],
+    [4, "foo", 1.23, 1, "", 4.8],
+    [3, "bar", 1.33, 2, "stringX", 4.8],
+    [10, "baz", 1.43, 0, "stringY", 2.8],
+    [8, "bax", "", -1, "", ""],
+    ["", "foo", 1.53, "", "stringZ", 0.8],
+    [4, "", 1.63, 1, "", ""],
+    ["", "", "", "", "", ""],
+    ["Long", "1", "", "", "", ""],
+    ["Footer", "2", "", "", "", ""],
+    ["Text", "3", "", "", "", ""],
+    ["Long", "4", "", "", "", ""],
+    ["Footer", "5", "", "", "", ""],
+    ["Text", "6", "", "", "", ""],
+    ["Long", "7", "", "", "", ""],
+    ["Footer", "8", "", "", "", ""],
+    ["Text", "9", "", "", "", ""],
+    ["Long", "10", "", "", "", ""],
+    ["Footer", "11", "", "", "", ""],
+    ["Text", "12", "", "", "", ""],
+    ["Long", "13", "", "", "", ""],
+    ["Footer", "14", "", "", "", ""],
+    ["Text", "15", "", "", "", ""],
+    ["Text", "16", "", "", "", ""],
+    ["Long", "17", "", "", "", ""],
+    ["Footer", "18", "", "", "", ""],
+    ["Text", "19", "", "", "", ""],
+    ["Long", "20", "", "", "", ""],
+    ["Footer", "21", "", "", "", ""],
+    ["Text", "22", "", "", "", ""],
+])
+
+
+# ---------------------------- find_footer_row ----------------------------
+def test_find_simple_footer():
+    footer_row = utils.find_df_footer(
+        df=df_test_footer_quote
+    )
+    assert footer_row == 7
+
+
+def test_find_simple_footer_nan():
+    footer_row = utils.find_df_footer(
+        df=df_test_footer_nan
+    )
+    assert footer_row == 7
+
+
+def test_find_simple_footer_mixed_nan():
+    footer_row = utils.find_df_footer(
+        df=df_test_footer_mixed
+    )
+    assert footer_row == 7
+
+
+def test_find_no_footer():
+    footer_row = utils.find_df_footer(
+        df=df_test_1a
+    )
+    assert footer_row is None
+
+
+def test_find_long_footer_default():
+    footer_row = utils.find_df_footer(
+        df=df_test_2_long_footer
+    )
+    assert footer_row is None
+
+
+def test_find_long_footer_none():
+    footer_row = utils.find_df_footer(
+        df=df_test_2_long_footer,
+        rows_to_search=None
+    )
+    assert footer_row == 7
+
+
+def test_find_long_footer_value():
+    footer_row = utils.find_df_footer(
+        df=df_test_2_long_footer,
+        rows_to_search=25
+    )
+    assert footer_row  == 7
+
+
+# ---------------------------- clean_df_footer ----------------------------
+def test_clean_simple_footer():
+    clean_df = utils.clean_df_footer(
+        df=df_test_footer_quote
+    )
+    npt.assert_array_equal(clean_df, df_test_1a)
+
+
+def test_clean_simple_footer_nan():
+    clean_df = utils.clean_df_footer(
+        df=df_test_footer_nan
+    )
+    npt.assert_array_equal(clean_df, df_test_1a)
+
+
+def test_clean_simple_footer_mixed_nan():
+    clean_df = utils.clean_df_footer(
+        df=df_test_footer_mixed
+    )
+    npt.assert_array_equal(clean_df, df_test_1a)
+
+
+def test_clean_no_footer():
+    clean_df = utils.clean_df_footer(
+        df=df_test_1a
+    )
+    npt.assert_array_equal(clean_df, df_test_1a)
+
+
+def test_clean_long_footer_default():
+    clean_df = utils.clean_df_footer(
+        df=df_test_2_long_footer
+    )
+    # since the footer doesn't find_df_footert in the default parameters,
+    # nothing gets cleaned.
+    npt.assert_array_equal(clean_df, df_test_2_long_footer)
+
+
+def test_clean_long_footer_none():
+    clean_df = utils.clean_df_footer(
+        df=df_test_2_long_footer,
+        rows_to_search=None
+    )
+    npt.assert_array_equal(clean_df, df_test_1a)
+
+
+def test_clean_long_footer_value():
+    clean_df = utils.clean_df_footer(
+        df=df_test_2_long_footer,
+        rows_to_search=25
+    )
+    npt.assert_array_equal(clean_df, df_test_1a)
