@@ -2,7 +2,7 @@
 version: "3.7"
 services:
   app:
-    command: ["pytest", "/tmp/test/pytest"]
+    command: ["pytest", "/tmp/test/python_unit", "-v"]
     volumes:
       - "${PWD}/test/data_files/:/tmp/data_files"
       - "${PWD}/test:/tmp/test"

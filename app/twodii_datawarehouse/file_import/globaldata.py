@@ -1,7 +1,7 @@
 """Import functions for globaldata files."""
 
 import pandas as pd
-import twodii_datawarehouse.file_import.utils as utils
+import twodii_datawarehouse.file_import.df_utils as dfu
 
 
 def parse_globaldata_power_plants(
@@ -19,7 +19,7 @@ def parse_globaldata_power_plants(
                         but only one expected: {raw_data.keys()}""")
     raw_data = raw_data[list(raw_data.keys())[0]]
 
-    df = utils.clean_df(
+    df = dfu.clean_df(
         df=raw_data,
         columns_name_list=columns_name_list
     )
@@ -97,7 +97,7 @@ def parse_globaldata_power_extract(
                         but only one expected: {raw_data.keys()}""")
     raw_data = raw_data[list(raw_data.keys())[0]]
 
-    df = utils.clean_df(
+    df = dfu.clean_df(
         df=raw_data,
         columns_name_list=columns_name_list
     )
@@ -131,7 +131,7 @@ def parse_globaldata_power_purchase_agreements(
     )
     raw_data = raw_data['Power Purchase Agreements']
 
-    df = utils.clean_df(
+    df = dfu.clean_df(
         df=raw_data,
         columns_name_list=columns_name_list
     )
