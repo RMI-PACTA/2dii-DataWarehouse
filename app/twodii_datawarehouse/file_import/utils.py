@@ -79,7 +79,7 @@ def find_df_footer(
         rows_to_search = df.shape[0]
     footer_start = None
     for k, v in df.tail(rows_to_search).iterrows():
-        if all(pd.isna(v.values) | (v.values == '')):
+        if all(pd.isna(v.values) | (v.values.astype(str) == '')):
             footer_start = k
             break
     return footer_start
@@ -99,7 +99,9 @@ def clean_empty_cols(df):
     # externalize the column list, so we arent' iterating over a changing list
     col_list = df.columns
     for col in col_list:
-        if all(pd.isna(df[col])):
+        # need to cast to str, otherwise a column of all nan will throw a
+        # FutureWarning because it's comparing numpy and standard types
+        if all(pd.isna(df[col]) | (df[col].astype(str) == '')):
             df = df.drop(col, axis='columns')
     return df
 

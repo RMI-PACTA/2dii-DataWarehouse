@@ -5,7 +5,10 @@ import pandas as pd
 import pytest
 import twodii_datawarehouse.file_import.utils as utils
 
-# Test frame with header on first row, no footers
+# Setup test info for headers
+df_test_names = ["intA", "strB", "floatC", "intD", "strE", "floatF"]
+clean_column_names = ["inta", "strb", "floatc", "intd", "stre", "floatf"]
+
 df_test_simple = pd.DataFrame([
     ["intA", "strB", "floatC", "intD", "strE", "floatF"],
     [4, "foo", 1.23, 1, "", 4.8],
@@ -16,7 +19,15 @@ df_test_simple = pd.DataFrame([
     [4, "", 1.63, 1, "", ""]
 ])
 
-# Test frame with header on first row, no footers
+df_test_simple_no_header = pd.DataFrame([
+    [4, "foo", 1.23, 1, "", 4.8],
+    [3, "bar", 1.33, 2, "stringX", 4.8],
+    [10, "baz", 1.43, 0, "stringY", 2.8],
+    [8, "bax", "", -1, "", ""],
+    ["", "foo", 1.53, "", "stringZ", 0.8],
+    [4, "", 1.63, 1, "", ""]
+])
+
 df_test_small_header = pd.DataFrame([
     ["Sample", "", "", "", "", ""],
     ["", "Header", "", "", "", ""],
@@ -30,7 +41,6 @@ df_test_small_header = pd.DataFrame([
     [4, "", 1.63, 1, "", ""]
 ])
 
-# Test frame with header on first row, no footers
 df_test_long_header = pd.DataFrame([
     ["0", "Sample", "", "", "", ""],
     ["1", "Header", "", "", "", ""],
@@ -53,7 +63,6 @@ df_test_long_header = pd.DataFrame([
     [4, "", 1.63, 1, "", ""]
 ])
 
-# Test frame with header on first row, no footers
 df_test_multiple_headers = pd.DataFrame([
     ["intA", "strB", "", "", "", ""],
     [4, "foo", 1.23, 1, "", 4.8],
@@ -66,8 +75,6 @@ df_test_multiple_headers = pd.DataFrame([
     [4, "", 1.63, 1, "", ""]
 ])
 
-df_test_names = ["intA", "strB", "floatC", "intD", "strE", "floatF"]
-
 
 # ---------------------------- find_header_row ----------------------------
 def test_find_simple_header_top_row():
@@ -76,7 +83,7 @@ def test_find_simple_header_top_row():
         columns_name_list=df_test_names
     )
     assert header_row == 0
-    assert header_names == ["inta", "strb", "floatc", "intd", "stre", "floatf"]
+    assert header_names == clean_column_names
 
 
 def test_find_simple_header_fourth_row():
@@ -85,7 +92,7 @@ def test_find_simple_header_fourth_row():
         columns_name_list=df_test_names
     )
     assert header_row == 3
-    assert header_names == ["inta", "strb", "floatc", "intd", "stre", "floatf"]
+    assert header_names == clean_column_names
 
 
 def test_find_simple_header_throw_exception_default_rows():
@@ -134,7 +141,7 @@ def test_find_simple_header_rows_to_test_15():
         rows_to_search=15
     )
     assert header_row == 12
-    assert header_names == ["inta", "strb", "floatc", "intd", "stre", "floatf"]
+    assert header_names == clean_column_names
 
 
 def test_find_simple_header_rows_to_test_none():
@@ -144,7 +151,7 @@ def test_find_simple_header_rows_to_test_none():
         rows_to_search=None
     )
     assert header_row == 12
-    assert header_names == ["inta", "strb", "floatc", "intd", "stre", "floatf"]
+    assert header_names == clean_column_names
 
 
 def test_stop_at_first_header_row_above_threshold_default():
@@ -173,7 +180,7 @@ def test_find_best_header_in_range():
         stop_threshold=1
     )
     assert header_row == 7
-    assert header_names == ["inta", "strb", "floatc", "intd", "stre", "floatf"]
+    assert header_names == clean_column_names
 
 
 def test_find_header_row_stop_threshold_must_be_numeric():
@@ -188,6 +195,37 @@ def test_find_header_row_stop_threshold_must_be_numeric():
 
 # ---------------------------- clean_header ----------------------------
 def test_clean_simple_header():
+    clean_df = utils.clean_df_header(
+        df=df_test_simple,
+        columns_name_list=df_test_names
+    )
+    npt.assert_array_equal(
+        clean_df,
+        df_test_simple_no_header
+    )
+    npt.assert_array_equal(
+        clean_df.columns,
+        clean_column_names
+    )
+
+
+def test_clean_header_pass_kwargs_rows():
+    clean_df = utils.clean_df_header(
+        df=df_test_long_header,
+        columns_name_list=df_test_names,
+        rows_to_search=15
+    )
+    npt.assert_array_equal(
+        clean_df,
+        df_test_simple_no_header
+    )
+    npt.assert_array_equal(
+        clean_df.columns,
+        clean_column_names,
+    )
+
+
+def test_clean_multiple_headers():
     clean_df = utils.clean_df_header(
         df=df_test_multiple_headers,
         columns_name_list=df_test_names
@@ -207,29 +245,6 @@ def test_clean_simple_header():
     )
 
 
-def test_clean_header_pass_kwargs_rows():
-    clean_df = utils.clean_df_header(
-        df=df_test_long_header,
-        columns_name_list=df_test_names,
-        rows_to_search=15
-    )
-    npt.assert_array_equal(
-        clean_df,
-        pd.DataFrame([
-            [4, "foo", 1.23, 1, "", 4.8],
-            [3, "bar", 1.33, 2, "stringX", 4.8],
-            [10, "baz", 1.43, 0, "stringY", 2.8],
-            [8, "bax", "", -1, "", ""],
-            ["", "foo", 1.53, "", "stringZ", 0.8],
-            [4, "", 1.63, 1, "", ""]
-        ])
-    )
-    npt.assert_array_equal(
-        clean_df.columns,
-        ["inta", "strb", "floatc", "intd", "stre", "floatf"],
-    )
-
-
 def test_clean_header_pass_kwargs_threshold():
     clean_df = utils.clean_df_header(
         df=df_test_multiple_headers,
@@ -244,11 +259,11 @@ def test_clean_header_pass_kwargs_threshold():
     )
     npt.assert_array_equal(
         clean_df.columns,
-        ["inta", "strb", "floatc", "intd", "stre", "floatf"],
+        clean_column_names,
     )
 
 
-# Test frame with header on first row, and footer
+# Setup test frames for footers
 df_test_footer_quote = pd.DataFrame([
     ["intA", "strB", "floatC", "intD", "strE", "floatF"],
     [4, "foo", 1.23, 1, "", 4.8],
@@ -427,3 +442,429 @@ def test_clean_long_footer_value():
         rows_to_search=25
     )
     npt.assert_array_equal(clean_df, df_test_simple)
+
+
+# setup dataframes for empty columns
+df_test_empty_column_quote = pd.DataFrame([
+    ["intA", "strB", "floatC", "intD", "strE", "floatF", ""],
+    [4, "foo", 1.23, 1, "", 4.8, ""],
+    [3, "bar", 1.33, 2, "stringX", 4.8, ""],
+    [10, "baz", 1.43, 0, "stringY", 2.8, ""],
+    [8, "bax", "", -1, "", "", ""],
+    ["", "foo", 1.53, "", "stringZ", 0.8, ""],
+    [4, "", 1.63, 1, "", "", ""]
+])
+
+df_test_empty_column_nan = pd.DataFrame([
+    ["intA", "strB", "floatC", "intD", "strE", "floatF", np.nan],
+    [4, "foo", 1.23, 1, "", 4.8, np.nan],
+    [3, "bar", 1.33, 2, "stringX", 4.8, np.nan],
+    [10, "baz", 1.43, 0, "stringY", 2.8, np.nan],
+    [8, "bax", "", -1, "", "", np.nan],
+    ["", "foo", 1.53, "", "stringZ", 0.8, np.nan],
+    [4, "", 1.63, 1, "", "", np.nan]
+])
+
+df_test_empty_column_mixed = pd.DataFrame([
+    ["intA", "strB", "floatC", "intD", "strE", "floatF", np.nan],
+    [4, "foo", 1.23, 1, "", 4.8, ""],
+    [3, "bar", 1.33, 2, "stringX", 4.8, np.nan],
+    [10, "baz", 1.43, 0, "stringY", 2.8, ""],
+    [8, "bax", "", -1, "", "", np.nan],
+    ["", "foo", 1.53, "", "stringZ", 0.8, ""],
+    [4, "", 1.63, 1, "", "", np.nan]
+])
+
+df_test_empty_middle_column = pd.DataFrame([
+    ["intA", "strB", "", "floatC", "intD", "strE", "floatF"],
+    [4, "foo", "", 1.23, 1, "", 4.8],
+    [3, "bar", "", 1.33, 2, "stringX", 4.8],
+    [10, "baz", "", 1.43, 0, "stringY", 2.8],
+    [8, "bax", "", "", -1, "", ""],
+    ["", "foo", "", 1.53, "", "stringZ", 0.8],
+    [4, "", "", 1.63, 1, "", ""]
+])
+
+df_test_empty_middle_column_header = pd.DataFrame([
+    ["intA", "strB", "EmptyX", "floatC", "intD", "strE", "floatF"],
+    [4, "foo", "", 1.23, 1, "", 4.8],
+    [3, "bar", "", 1.33, 2, "stringX", 4.8],
+    [10, "baz", "", 1.43, 0, "stringY", 2.8],
+    [8, "bax", "", "", -1, "", ""],
+    ["", "foo", "", 1.53, "", "stringZ", 0.8],
+    [4, "", "", 1.63, 1, "", ""]
+])
+
+
+def test_clean_empty_column_no_empty():
+    clean_df = utils.clean_empty_cols(
+        df_test_simple
+    )
+    npt.assert_array_equal(clean_df, df_test_simple)
+
+
+def test_clean_empty_column_quote():
+    clean_df = utils.clean_empty_cols(
+        df_test_empty_column_quote
+    )
+    npt.assert_array_equal(clean_df, df_test_simple)
+
+
+def test_clean_empty_column_nan():
+    clean_df = utils.clean_empty_cols(
+        df_test_empty_column_nan
+    )
+    npt.assert_array_equal(clean_df, df_test_simple)
+
+
+def test_clean_empty_column_mixed():
+    clean_df = utils.clean_empty_cols(
+        df_test_empty_column_mixed
+    )
+    npt.assert_array_equal(clean_df, df_test_simple)
+
+
+def test_clean_empty_middle_column():
+    clean_df = utils.clean_empty_cols(
+        df_test_empty_middle_column
+    )
+    npt.assert_array_equal(clean_df, df_test_simple)
+
+
+# the header prevents this from being recognized as empty
+def test_clean_empty_middle_column_header_unprocessed():
+    clean_df = utils.clean_empty_cols(
+        df_test_empty_middle_column_header
+    )
+    npt.assert_array_equal(clean_df, df_test_empty_middle_column_header)
+
+
+# processing the headers first gives an empty column
+def test_clean_empty_middle_column_header_processed():
+    processed_headers = utils.clean_df_header(
+        df_test_empty_middle_column_header,
+        columns_name_list=df_test_names
+    )
+    clean_df = utils.clean_empty_cols(
+        processed_headers
+    )
+    npt.assert_array_equal(clean_df, df_test_simple_no_header)
+
+
+# setup data frames with headers, footers, and empty columns, for unified
+# cleaning
+df_test_small_header_small_footer = pd.DataFrame([
+    ["Sample", "", "", "", "", ""],
+    ["", "Header", "", "", "", ""],
+    ["", "", "Info", "", "", ""],
+    ["intA", "strB", "floatC", "intD", "strE", "floatF"],
+    [4, "foo", 1.23, 1, "", 4.8],
+    [3, "bar", 1.33, 2, "stringX", 4.8],
+    [10, "baz", 1.43, 0, "stringY", 2.8],
+    [8, "bax", "", -1, "", ""],
+    ["", "foo", 1.53, "", "stringZ", 0.8],
+    [4, "", 1.63, 1, "", ""],
+    ["", "", "", "", "", ""],
+    ["Footer", "text", "", "", "", ""],
+])
+
+
+# setup data frames with headers, footers, and empty columns, for unified
+# cleaning
+df_test_small_header_small_footer_empty_col = pd.DataFrame([
+    ["Sample", "", "", "", "", "", ""],
+    ["", "Header", "", "", "", "", ""],
+    ["", "", "Info", "", "", "", ""],
+    ["intA", "strB", "floatC",  "emptyX", "intD", "strE", "floatF"],
+    [4, "foo", 1.23, "", 1, "", 4.8],
+    [3, "bar", 1.33, "", 2, "stringX", 4.8],
+    [10, "baz", 1.43, "", 0, "stringY", 2.8],
+    [8, "bax", "", "", -1, "", ""],
+    ["", "foo", 1.53, "", "", "stringZ", 0.8],
+    [4, "", 1.63, "", 1, "", ""],
+    ["", "", "", "", "", "", ""],
+    ["Footer", "text", "", "", "", "", ""],
+])
+
+
+# setup data frames with headers, footers, and empty columns, for unified
+# cleaning
+df_test_small_empty_header_small_footer = pd.DataFrame([
+    ["", "", "", "", "", ""],
+    ["", "", "", "", "", ""],
+    ["", "", "", "", "", ""],
+    ["intA", "strB", "floatC", "intD", "strE", "floatF"],
+    [4, "foo", 1.23, 1, "", 4.8],
+    [3, "bar", 1.33, 2, "stringX", 4.8],
+    [10, "baz", 1.43, 0, "stringY", 2.8],
+    [8, "bax", "", -1, "", ""],
+    ["", "foo", 1.53, "", "stringZ", 0.8],
+    [4, "", 1.63, 1, "", ""],
+    ["", "", "", "", "", ""],
+    ["Footer", "text", "", "", "", ""],
+])
+
+
+# ---------------------------- clean_df ----------------------------
+def test_clean_df_simple():
+    clean_df = utils.clean_df(
+        df=df_test_simple,
+        columns_name_list=df_test_names
+    )
+    npt.assert_array_equal(
+        clean_df,
+        df_test_simple_no_header
+    )
+    npt.assert_array_equal(
+        clean_df.columns,
+        clean_column_names
+    )
+
+
+def test_clean_df_small_header():
+    clean_df = utils.clean_df(
+        df=df_test_small_header,
+        columns_name_list=df_test_names
+    )
+    npt.assert_array_equal(
+        clean_df,
+        df_test_simple_no_header
+    )
+    npt.assert_array_equal(
+        clean_df.columns,
+        clean_column_names
+    )
+
+
+def test_clean_df_long_header_rows_15():
+    clean_df = utils.clean_df(
+        df=df_test_small_header,
+        columns_name_list=df_test_names,
+        rows_to_search=15
+    )
+    npt.assert_array_equal(
+        clean_df,
+        df_test_simple_no_header
+    )
+    npt.assert_array_equal(
+        clean_df.columns,
+        clean_column_names
+    )
+
+
+def test_clean_df_long_header_rows_none():
+    clean_df = utils.clean_df(
+        df=df_test_small_header,
+        columns_name_list=df_test_names,
+        rows_to_search=None
+    )
+    npt.assert_array_equal(
+        clean_df,
+        df_test_simple_no_header
+    )
+    npt.assert_array_equal(
+        clean_df.columns,
+        clean_column_names
+    )
+
+
+def test_clean_df_simple_footer():
+    clean_df = utils.clean_df(
+        df=df_test_footer_quote,
+        columns_name_list=df_test_names
+    )
+    npt.assert_array_equal(
+        clean_df,
+        df_test_simple_no_header
+    )
+    npt.assert_array_equal(
+        clean_df.columns,
+        clean_column_names
+    )
+
+
+def test_clean_df_simple_footer_nan():
+    clean_df = utils.clean_df(
+        df=df_test_footer_nan,
+        columns_name_list=df_test_names
+    )
+    npt.assert_array_equal(
+        clean_df,
+        df_test_simple_no_header
+    )
+    npt.assert_array_equal(
+        clean_df.columns,
+        clean_column_names
+    )
+
+
+def test_clean_df_simple_footer_mixed_nan():
+    clean_df = utils.clean_df(
+        df=df_test_footer_mixed,
+        columns_name_list=df_test_names
+    )
+    npt.assert_array_equal(
+        clean_df,
+        df_test_simple_no_header
+    )
+    npt.assert_array_equal(
+        clean_df.columns,
+        clean_column_names
+    )
+
+
+def test_clean_df_long_footer_none():
+    clean_df = utils.clean_df(
+        df=df_test_long_footer,
+        columns_name_list=df_test_names,
+        rows_to_search=None
+    )
+    npt.assert_array_equal(
+        clean_df,
+        df_test_simple_no_header
+    )
+    npt.assert_array_equal(
+        clean_df.columns,
+        clean_column_names
+    )
+
+
+def test_clean_df_long_footer_value():
+    clean_df = utils.clean_df(
+        df=df_test_long_footer,
+        columns_name_list=df_test_names,
+        rows_to_search=25
+    )
+    npt.assert_array_equal(
+        clean_df,
+        df_test_simple_no_header
+    )
+    npt.assert_array_equal(
+        clean_df.columns,
+        clean_column_names
+    )
+
+
+def test_clean_df_empty_column_quote():
+    clean_df = utils.clean_df(
+        df=df_test_empty_column_quote,
+        columns_name_list=df_test_names,
+        rows_to_search=25
+    )
+    npt.assert_array_equal(
+        clean_df,
+        df_test_simple_no_header
+    )
+    npt.assert_array_equal(
+        clean_df.columns,
+        clean_column_names
+    )
+
+
+def test_clean_df_empty_column_nan():
+    clean_df = utils.clean_df(
+        df=df_test_empty_column_nan,
+        columns_name_list=df_test_names,
+        rows_to_search=25
+    )
+    npt.assert_array_equal(
+        clean_df,
+        df_test_simple_no_header
+    )
+    npt.assert_array_equal(
+        clean_df.columns,
+        clean_column_names
+    )
+
+
+def test_clean_df_empty_column_mixed():
+    clean_df = utils.clean_df(
+        df=df_test_empty_column_mixed,
+        columns_name_list=df_test_names,
+        rows_to_search=25
+    )
+    npt.assert_array_equal(
+        clean_df,
+        df_test_simple_no_header
+    )
+    npt.assert_array_equal(
+        clean_df.columns,
+        clean_column_names
+    )
+
+
+def test_clean_df_empty_middle_column():
+    clean_df = utils.clean_df(
+        df=df_test_empty_middle_column,
+        columns_name_list=df_test_names,
+        rows_to_search=25
+    )
+    npt.assert_array_equal(
+        clean_df,
+        df_test_simple_no_header
+    )
+    npt.assert_array_equal(
+        clean_df.columns,
+        clean_column_names
+    )
+
+
+def test_clean_df_empty_middle_column_header():
+    clean_df = utils.clean_df(
+        df=df_test_empty_middle_column_header,
+        columns_name_list=df_test_names,
+        rows_to_search=25
+    )
+    npt.assert_array_equal(
+        clean_df,
+        df_test_simple_no_header
+    )
+    npt.assert_array_equal(
+        clean_df.columns,
+        clean_column_names
+    )
+
+
+def test_clean_df_header_footer():
+    clean_df = utils.clean_df(
+        df=df_test_small_header_small_footer,
+        columns_name_list=df_test_names
+    )
+    npt.assert_array_equal(
+        clean_df,
+        df_test_simple_no_header
+    )
+    npt.assert_array_equal(
+        clean_df.columns,
+        clean_column_names
+    )
+
+
+def test_clean_df_header_footer_empty():
+    clean_df = utils.clean_df(
+        df=df_test_small_header_small_footer_empty_col,
+        columns_name_list=df_test_names
+    )
+    npt.assert_array_equal(
+        clean_df,
+        df_test_simple_no_header
+    )
+    npt.assert_array_equal(
+        clean_df.columns,
+        clean_column_names
+    )
+
+
+def test_clean_df_empty_header_footer():
+    clean_df = utils.clean_df(
+        df=df_test_small_empty_header_small_footer,
+        columns_name_list=df_test_names
+    )
+    npt.assert_array_equal(
+        clean_df,
+        df_test_simple_no_header
+    )
+    npt.assert_array_equal(
+        clean_df.columns,
+        clean_column_names
+    )
