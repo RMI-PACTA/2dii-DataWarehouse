@@ -12,7 +12,7 @@ pgtap_deps := $(sql_deps) docker-compose.test_pgtap.yml
 
 # all python files in the app and pytest directories
 py_unit_deps := $(shell find app/ -type f -name '*.py') \
-	$(shell find test/pytest -type f -name '*.py') \
+	$(shell find test/python_unit -type f -name '*.py') \
 	Dockerfile \
 	docker-compose.yml
 

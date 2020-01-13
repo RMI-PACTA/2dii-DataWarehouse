@@ -2,7 +2,30 @@
 version: "3.7"
 services:
   app:
-    command: ["pytest", "/tmp/test/python_unit", "-v"]
+    command: [
+      "wait-for.sh", "test_db_python_unit:5432", "--",
+      "pytest", "/tmp/test/python_unit", "-v"
+    ]
+    depends_on:
+      - test_db_python_unit
+    environment:
+      POSTGRES_HOST: "${POSTGRES_HOST:-test_db_python_unit}"
+    networks:
+      - python_unit_net
     volumes:
-      - "${PWD}/test/data_files/:/tmp/data_files"
+      - "${PWD}/test/data_files/python_unit/:/tmp/data_files/python_unit"
       - "${PWD}/test:/tmp/test"
+
+  test_db_python_unit:
+    environment:
+      POSTGRES_DB: "${POSTGRES_DB:-twodii}"
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD:-postgres}"
+      POSTGRES_USER: "${POSTGRES_USER:-postgres}"
+    image: "postgres:11.5-alpine"
+    networks:
+      - python_unit_net
+
+networks:
+  python_unit_net:
+
+# not defining a volume, because I don't want any data persisted.

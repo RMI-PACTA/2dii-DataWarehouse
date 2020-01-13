@@ -1,9 +1,6 @@
 """Utility functions for operating on dataframes for file import."""
 import pandas as pd
 
-IMPORT_HISTORY_SCHEMA = 'rawdata'
-IMPORT_HISTORY_TABLE = 'import_history'
-
 
 def find_header_row(
     df,

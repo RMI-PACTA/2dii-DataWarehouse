@@ -2,6 +2,11 @@
 from datetime import datetime
 from hashlib import md5
 import logging
+import pandas as pd
+
+
+IMPORT_HISTORY_SCHEMA = 'rawdata'
+IMPORT_HISTORY_TABLE = 'import_history'
 
 
 def check_table_exists_in_db(
