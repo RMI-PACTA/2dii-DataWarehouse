@@ -24,6 +24,18 @@ def db_engine(connection_string):
     return sqla.create_engine(connection_string)
 
 
+# @pytest.fixture
+# def db_transact(db_engine):
+#     """Create a transaction which cleans up after itself by rolling back"""
+#     with db_engine.connect().begin() as db_con:
+#         yield db_con
+#         db_con.rollback()
+
+
+# def teardown_function():
+#     print('tearing down')
+
+
 def test_check_table_exists_schema_does_not_exist(db_engine):
     with pytest.raises(Exception) as excinfo:
         dbu.check_table_exists_in_db(
@@ -33,3 +45,14 @@ def test_check_table_exists_schema_does_not_exist(db_engine):
             raise_exception=True
         )
     assert str(excinfo.value) == "Table schemafoo.tablebar not in database."
+
+
+def test_check_table_exists_table_does_not_exist(db_engine):
+    with pytest.raises(Exception) as excinfo:
+        dbu.check_table_exists_in_db(
+            db_connection=db_engine,
+            tablename="tablebar",
+            schemaname="public",
+            raise_exception=True
+        )
+    assert str(excinfo.value) == "Table public.tablebar not in database."
