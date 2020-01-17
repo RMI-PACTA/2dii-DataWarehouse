@@ -1,6 +1,9 @@
 """Tests for database utilities for file importing."""
+
 import logging
+import numpy.testing as npt
 import os
+import pandas as pd
 import pytest
 import sqlalchemy as sqla
 import twodii_datawarehouse.file_import.db_utils as dbu
@@ -108,3 +111,81 @@ def test_check_table_exists_table_exist_engine_default(db_engine):
         schemaname="information_schema",
     )
     assert table_found is True
+
+
+column_info_columns = ["column_name", "ordinal_position", "is_nullable",
+                       "data_type", "constraint_type"]
+
+
+def test_get_db_column_info_simple(db_transact):
+    table_create_query = """
+        CREATE TABLE public.test_table (
+        id INT UNIQUE,
+        text_col TEXT,
+        float_col NUMERIC NOT NULL
+        )
+    """
+    db_transact.execute(table_create_query)
+    db_ci = dbu.get_db_column_info(
+        db_connection=db_transact,
+        tablename='test_table',
+        schemaname='public'
+    )
+    npt.assert_array_equal(
+        db_ci,
+        pd.DataFrame([
+            ["id", 1, "YES", "integer", "UNIQUE"],
+            ["text_col", 2, "YES", "text", None],
+            ["float_col", 3, "NO", "numeric", None],
+        ])
+    )
+    npt.assert_array_equal(
+        db_ci.columns,
+        column_info_columns
+    )
+
+
+def test_get_db_column_info_altered(db_transact):
+    table_create_query = """
+        CREATE TABLE public.test_table (
+        id INT UNIQUE,
+        text_col TEXT,
+        float_col NUMERIC NOT NULL
+        )
+    """
+    db_transact.execute(table_create_query)
+    drop_column_query = """
+        ALTER TABLE public.test_table
+        DROP COLUMN text_col;
+        ALTER TABLE public.test_table
+        ADD COLUMN bool_col BOOLEAN
+    """
+    db_transact.execute(drop_column_query)
+    db_ci = dbu.get_db_column_info(
+        db_connection=db_transact,
+        tablename='test_table',
+        schemaname='public'
+    )
+    npt.assert_array_equal(
+        db_ci,
+        pd.DataFrame([
+            ["id", 1, "YES", "integer", "UNIQUE"],
+            # Note postgres does not renumber ordinal_position
+            ["float_col", 3, "NO", "numeric", None],
+            ["bool_col", 4, "YES", "boolean", None],
+        ])
+    )
+    npt.assert_array_equal(
+        db_ci.columns,
+        column_info_columns
+    )
+
+
+def test_get_db_column_info_raises_dne(db_transact):
+    with pytest.raises(Exception) as excinfo:
+        dbu.check_table_exists_in_db(
+            db_connection=db_transact,
+            tablename="tablebar",
+            schemaname='schemafoo'
+        )
+    assert str(excinfo.value) == "Table schemafoo.tablebar not in database."
