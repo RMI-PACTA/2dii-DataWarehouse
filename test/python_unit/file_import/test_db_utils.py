@@ -58,7 +58,7 @@ def helper_create_import_history_table(db_connection):
         import_time TIMESTAMP NOT NULL,
         filetype varchar(128) NOT NULL,
         filename VARCHAR(255) NOT NULL,
-        filehash VARCHAR(32) NOT NULL
+        filehash VARCHAR(32) NOT NULL UNIQUE
     );
     """)
 
@@ -246,9 +246,28 @@ def test_add_to_import_history_simple(db_transact):
                 1,  # id
                 round(datetime.now().timestamp(), 0),  # "import_time" - epoch
                 'test1',  # filetype
-                pathlib.Path(f.name).name,  # filepath
+                pathlib.Path(f.name).name,  # filename
                 # d41d8cd98f00b204e9800998ecf8427e = the md5 of an empty file
-                'd41d8cd98f00b204e9800998ecf8427e'  # file_hash
+                'd41d8cd98f00b204e9800998ecf8427e'  # filehash
             ],
         ])
     )
+
+
+def test_add_to_import_history_reimport_same_file(db_transact):
+    helper_create_import_history_table(db_transact)
+    f = NamedTemporaryFile()
+    new_id = dbu.add_to_import_history(
+        filepath=pathlib.Path(f.name),
+        db_connection=db_transact,
+        filetype="test1"
+    )
+    assert new_id == 1
+    with pytest.raises(Exception) as excinfo:
+        new_id = dbu.add_to_import_history(
+            filepath=pathlib.Path(f.name),
+            db_connection=db_transact,
+            filetype="test1"
+        )
+    assert "Key (filehash)=(d41d8cd98f00b204e9800998ecf8427e) already exists" \
+        in str(excinfo.value)
