@@ -306,10 +306,6 @@ def test_add_to_import_history_second_file(db_transact):
     )
 
 
-def test_x():
-    assert False
-
-
 def test_add_to_import_history_reimport_same_file(db_transact):
     helper_create_import_history_table(db_transact)
     f = NamedTemporaryFile(suffix=".csv")
