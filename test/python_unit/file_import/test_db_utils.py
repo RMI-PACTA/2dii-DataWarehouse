@@ -351,7 +351,7 @@ def test_add_to_import_history_reimport_same_content_diff_type(db_transact):
     new_id = dbu.add_to_import_history(
         filepath=pathlib.Path(f.name),
         db_connection=db_transact,
-        filetype="test2"
+        filetype="test1"
     )
     assert new_id == 1
     f2 = NamedTemporaryFile(suffix=".csv")
@@ -359,10 +359,52 @@ def test_add_to_import_history_reimport_same_content_diff_type(db_transact):
         new_id = dbu.add_to_import_history(
             filepath=pathlib.Path(f2.name),
             db_connection=db_transact,
-            filetype="test1"
+            filetype="test2"
         )
     assert "Key (filehash)=(d41d8cd98f00b204e9800998ecf8427e) already exists" \
         in str(excinfo.value)
 
 
+def test_check_if_file_imported_simple(db_transact):
+    helper_create_import_history_table(db_transact)
+    f = NamedTemporaryFile(suffix=".csv")
+    filepath = pathlib.Path(f.name)
+    new_id = dbu.add_to_import_history(
+        filepath=filepath,
+        db_connection=db_transact,
+        filetype="test1"
+    )
+    assert new_id == 1
+    is_imported = dbu.check_if_file_imported(filepath, db_transact)
+    assert is_imported == 1
 
+
+def test_check_if_file_imported_simple_not(db_transact):
+    helper_create_import_history_table(db_transact)
+    f = NamedTemporaryFile(suffix=".csv")
+    filepath = pathlib.Path(f.name)
+    is_imported = dbu.check_if_file_imported(filepath, db_transact)
+    assert is_imported is None
+
+
+def test_check_if_file_imported_simple_second_file(db_transact):
+    helper_create_import_history_table(db_transact)
+    f = NamedTemporaryFile(suffix=".csv")
+    new_id = dbu.add_to_import_history(
+        filepath=pathlib.Path(f.name),
+        db_connection=db_transact,
+        filetype="test1"
+    )
+    assert new_id == 1
+    f2 = NamedTemporaryFile(suffix=".csv")
+    filepath2 = pathlib.Path(f2.name)
+    f2.write(b"Hello, World")
+    f2.seek(0)
+    new_id = dbu.add_to_import_history(
+        filepath=pathlib.Path(f2.name),
+        db_connection=db_transact,
+        filetype="test2"
+    )
+    assert new_id == 2
+    is_imported = dbu.check_if_file_imported(filepath2, db_transact)
+    assert is_imported == 2
