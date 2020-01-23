@@ -1,6 +1,7 @@
 """Tests for database utilities for file importing."""
 
 from datetime import datetime
+from freezegun import freeze_time
 from tempfile import NamedTemporaryFile
 import logging
 import numpy.testing as npt
@@ -210,6 +211,7 @@ def test_get_db_column_info_raises_dne(db_transact):
     assert str(excinfo.value) == "Table schemafoo.tablebar not in database."
 
 
+@freeze_time("1970-01-02 03:04:05", auto_tick_seconds=15)
 def test_add_to_import_history_simple(db_transact):
     helper_create_import_history_table(db_transact)
     f = NamedTemporaryFile(suffix=".csv")
@@ -230,18 +232,12 @@ def test_add_to_import_history_simple(db_transact):
         import_history.columns,
         import_history_cols
     )
-    # convert the timestamp to epoch, since npt can't natively compare datetime
-    # objects. Rounding the epoch timestamp to the nearest second, which should
-    # be okay, since most of the time these are differing by a few (9 or 10)
-    # thousandths of a second.
-    import_history["import_time"] = import_history["import_time"]. \
-        apply(lambda x: round(x.timestamp(), 0))
     npt.assert_array_equal(
         import_history,
         pd.DataFrame([
             [
                 1,  # id
-                round(datetime.now().timestamp(), 0),  # "import_time" - epoch
+                datetime(1970, 1, 2, 3, 4, 5),
                 'test1',  # filetype
                 pathlib.Path(f.name).name,  # filename
                 # d41d8cd98f00b204e9800998ecf8427e = the md5 of an empty file
@@ -251,6 +247,7 @@ def test_add_to_import_history_simple(db_transact):
     )
 
 
+@freeze_time("1970-01-02 03:04:05", auto_tick_seconds=15)
 def test_add_to_import_history_second_file(db_transact):
     helper_create_import_history_table(db_transact)
     f = NamedTemporaryFile(suffix=".csv")
@@ -282,14 +279,12 @@ def test_add_to_import_history_second_file(db_transact):
         import_history.columns,
         import_history_cols
     )
-    import_history["import_time"] = import_history["import_time"]. \
-        apply(lambda x: round(x.timestamp(), 0))
     npt.assert_array_equal(
         import_history,
         pd.DataFrame([
             [
                 1,  # id
-                round(datetime.now().timestamp(), 0),  # "import_time" - epoch
+                datetime(1970, 1, 2, 3, 4, 5),
                 'test1',  # filetype
                 pathlib.Path(f.name).name,  # filename
                 # d41d8cd98f00b204e9800998ecf8427e = the md5 of an empty file
@@ -297,7 +292,7 @@ def test_add_to_import_history_second_file(db_transact):
             ],
             [
                 2,  # id
-                round(datetime.now().timestamp(), 0),  # "import_time" - epoch
+                datetime(1970, 1, 2, 3, 4, 20),  # add 15 sec for tick()
                 'test2',  # filetype
                 pathlib.Path(f2.name).name,  # filename
                 '82bb413746aee42f89dea2b59614f9ef'  # filehash= b"Hello, World"
@@ -325,6 +320,7 @@ def test_add_to_import_history_reimport_same_file(db_transact):
         in str(excinfo.value)
 
 
+@freeze_time("1970-01-02 03:04:05", auto_tick_seconds=15)
 def test_add_to_import_history_reimport_altered_file(db_transact):
     helper_create_import_history_table(db_transact)
     f = NamedTemporaryFile(suffix=".csv")
@@ -353,14 +349,12 @@ def test_add_to_import_history_reimport_altered_file(db_transact):
         import_history.columns,
         import_history_cols
     )
-    import_history["import_time"] = import_history["import_time"]. \
-        apply(lambda x: round(x.timestamp(), 0))
     npt.assert_array_equal(
         import_history,
         pd.DataFrame([
             [
                 1,  # id
-                round(datetime.now().timestamp(), 0),  # "import_time" - epoch
+                datetime(1970, 1, 2, 3, 4, 5),
                 'test1',  # filetype
                 pathlib.Path(f.name).name,  # filename
                 # d41d8cd98f00b204e9800998ecf8427e = the md5 of an empty file
@@ -368,7 +362,7 @@ def test_add_to_import_history_reimport_altered_file(db_transact):
             ],
             [
                 2,  # id
-                round(datetime.now().timestamp(), 0),  # "import_time" - epoch
+                datetime(1970, 1, 2, 3, 4, 20),
                 'test1',  # filetype
                 pathlib.Path(f.name).name,  # filename
                 '82bb413746aee42f89dea2b59614f9ef'  # filehash= b"Hello, World"
