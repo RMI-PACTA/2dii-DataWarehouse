@@ -325,6 +325,58 @@ def test_add_to_import_history_reimport_same_file(db_transact):
         in str(excinfo.value)
 
 
+def test_add_to_import_history_reimport_altered_file(db_transact):
+    helper_create_import_history_table(db_transact)
+    f = NamedTemporaryFile(suffix=".csv")
+    new_id = dbu.add_to_import_history(
+        filepath=pathlib.Path(f.name),
+        db_connection=db_transact,
+        filetype="test1"
+    )
+    assert new_id == 1
+    f.write(b"Hello, World")
+    f.seek(0)
+    new_id = dbu.add_to_import_history(
+        filepath=pathlib.Path(f.name),
+        db_connection=db_transact,
+        filetype="test1"
+    )
+    assert new_id == 2
+    import_history = pd.read_sql(
+        sql=f"""
+            SELECT *
+            from {dbu.IMPORT_HISTORY_SCHEMA}.{dbu.IMPORT_HISTORY_TABLE}
+        """,
+        con=db_transact
+    )
+    npt.assert_array_equal(
+        import_history.columns,
+        import_history_cols
+    )
+    import_history["import_time"] = import_history["import_time"]. \
+        apply(lambda x: round(x.timestamp(), 0))
+    npt.assert_array_equal(
+        import_history,
+        pd.DataFrame([
+            [
+                1,  # id
+                round(datetime.now().timestamp(), 0),  # "import_time" - epoch
+                'test1',  # filetype
+                pathlib.Path(f.name).name,  # filename
+                # d41d8cd98f00b204e9800998ecf8427e = the md5 of an empty file
+                'd41d8cd98f00b204e9800998ecf8427e'  # filehash
+            ],
+            [
+                2,  # id
+                round(datetime.now().timestamp(), 0),  # "import_time" - epoch
+                'test1',  # filetype
+                pathlib.Path(f.name).name,  # filename
+                '82bb413746aee42f89dea2b59614f9ef'  # filehash= b"Hello, World"
+            ],
+        ])
+    )
+
+
 def test_add_to_import_history_reimport_same_content(db_transact):
     helper_create_import_history_table(db_transact)
     f = NamedTemporaryFile(suffix=".csv")
@@ -408,3 +460,160 @@ def test_check_if_file_imported_simple_second_file(db_transact):
     assert new_id == 2
     is_imported = dbu.check_if_file_imported(filepath2, db_transact)
     assert is_imported == 2
+
+
+def test_check_if_file_imported_second_file_not(db_transact):
+    helper_create_import_history_table(db_transact)
+    f = NamedTemporaryFile(suffix=".csv")
+    new_id = dbu.add_to_import_history(
+        filepath=pathlib.Path(f.name),
+        db_connection=db_transact,
+        filetype="test1"
+    )
+    assert new_id == 1
+    f2 = NamedTemporaryFile(suffix=".csv")
+    filepath2 = pathlib.Path(f2.name)
+    f2.write(b"Hello, World")
+    f2.seek(0)
+    is_imported = dbu.check_if_file_imported(filepath2, db_transact)
+    assert is_imported is None
+
+
+def test_check_if_file_imported_second_file_same_hash_not(db_transact):
+    helper_create_import_history_table(db_transact)
+    f = NamedTemporaryFile(suffix=".csv")
+    new_id = dbu.add_to_import_history(
+        filepath=pathlib.Path(f.name),
+        db_connection=db_transact,
+        filetype="test1"
+    )
+    assert new_id == 1
+    f2 = NamedTemporaryFile(suffix=".csv")
+    filepath2 = pathlib.Path(f2.name)
+    is_imported = dbu.check_if_file_imported(filepath2, db_transact)
+    assert is_imported is None
+
+
+def test_check_if_file_imported_altered_file(db_transact):
+    helper_create_import_history_table(db_transact)
+    f = NamedTemporaryFile(suffix=".csv")
+    new_id = dbu.add_to_import_history(
+        filepath=pathlib.Path(f.name),
+        db_connection=db_transact,
+        filetype="test1"
+    )
+    assert new_id == 1
+    f2 = NamedTemporaryFile(suffix=".csv")
+    filepath2 = pathlib.Path(f2.name)
+    is_imported = dbu.check_if_file_imported(filepath2, db_transact)
+    assert is_imported is None
+
+
+def test_check_if_file_imported_reimport_altered_file(db_transact):
+    helper_create_import_history_table(db_transact)
+    f = NamedTemporaryFile(suffix=".csv")
+    filepath = pathlib.Path(f.name)
+    new_id = dbu.add_to_import_history(
+        filepath=filepath,
+        db_connection=db_transact,
+        filetype="test1"
+    )
+    assert new_id == 1
+    f.write(b"Hello, World")
+    f.seek(0)
+    new_id = dbu.add_to_import_history(
+        filepath=filepath,
+        db_connection=db_transact,
+        filetype="test1"
+    )
+    assert new_id == 2
+    is_imported = dbu.check_if_file_imported(filepath, db_transact)
+    assert is_imported == 2
+
+
+def test_write_df_to_db_simple(db_transact):
+    table_create_query = """
+        CREATE TABLE public.test_table (
+        id INT UNIQUE,
+        text_col TEXT,
+        float_col NUMERIC NOT NULL
+        )
+    """
+    db_transact.execute(table_create_query)
+    test_df = pd.DataFrame(
+        data=[
+            [1, "foo", 1.01],
+            [2, "bar", 2.02],
+            [3, "baz", 3.03],
+        ],
+        columns=["id", "text_col", "float_col"]
+    )
+    dbu.write_df_to_db(
+        df=test_df,
+        db_connection=db_transact,
+        tablename='test_table',
+        schemaname='public'
+    )
+    db_results = pd.read_sql(
+        sql="SELECT * from public.test_table",
+        con=db_transact
+    )
+    npt.assert_array_equal(
+        db_results,
+        test_df
+    )
+    npt.assert_array_equal(
+        db_results.columns,
+        ["id", "text_col", "float_col"]
+    )
+
+
+def test_write_df_to_db_multiple(db_transact):
+    table_create_query = """
+        CREATE TABLE public.test_table (
+        id INT UNIQUE,
+        text_col TEXT,
+        float_col NUMERIC NOT NULL
+        )
+    """
+    db_transact.execute(table_create_query)
+    test_df = pd.DataFrame(
+        data=[
+            [1, "foo", 1.01],
+            [2, "bar", 2.02],
+            [3, "baz", 3.03],
+        ],
+        columns=["id", "text_col", "float_col"]
+    )
+    dbu.write_df_to_db(
+        df=test_df,
+        db_connection=db_transact,
+        tablename='test_table',
+        schemaname='public'
+    )
+    test_df2 = pd.DataFrame(
+        data=[
+            [4, "foo", 4.03],
+            [5, "bar", 5.05],
+            [6, "baz", 6.06],
+        ],
+        columns=["id", "text_col", "float_col"]
+    )
+    dbu.write_df_to_db(
+        df=test_df2,
+        db_connection=db_transact,
+        tablename='test_table',
+        schemaname='public'
+    )
+    db_results = pd.read_sql(
+        sql="SELECT * from public.test_table",
+        con=db_transact
+    )
+    npt.assert_array_equal(
+        db_results,
+        test_df.append(test_df2)
+    )
+    npt.assert_array_equal(
+        db_results.columns,
+        ["id", "text_col", "float_col"]
+    )
