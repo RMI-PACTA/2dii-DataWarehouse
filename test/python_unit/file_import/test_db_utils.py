@@ -611,3 +611,235 @@ def test_write_df_to_db_multiple(db_transact):
         db_results.columns,
         ["id", "text_col", "float_col"]
     )
+
+
+def test_write_df_to_db_reordered_col(db_transact):
+    table_create_query = """
+        CREATE TABLE public.test_table (
+        id INT UNIQUE,
+        float_col NUMERIC NOT NULL,
+        text_col TEXT
+        )
+    """
+    db_transact.execute(table_create_query)
+    test_df = pd.DataFrame(
+        data=[
+            [1, "foo", 1.01],
+            [2, "bar", 2.02],
+            [3, "baz", 3.03],
+        ],
+        columns=["id", "text_col", "float_col"]
+    )
+    dbu.write_df_to_db(
+        df=test_df,
+        db_connection=db_transact,
+        tablename='test_table',
+        schemaname='public'
+    )
+    db_results = pd.read_sql(
+        sql="SELECT * from public.test_table",
+        con=db_transact
+    )
+    npt.assert_array_equal(
+        db_results,
+        pd.DataFrame(
+            data=[
+                [1, 1.01, "foo"],
+                [2, 2.02, "bar"],
+                [3, 3.03, "baz"],
+            ],
+            columns=["id", "float_col", "text_col"]
+        )
+    )
+    npt.assert_array_equal(
+        db_results.columns,
+        ["id", "float_col", "text_col"]
+    )
+
+
+def test_write_df_to_db_df_missing_columns(db_transact):
+    table_create_query = """
+        CREATE TABLE public.test_table (
+        id INT UNIQUE,
+        text_col TEXT,
+        float_col NUMERIC NOT NULL,
+        bool_col BOOLEAN
+        )
+    """
+    db_transact.execute(table_create_query)
+    test_df = pd.DataFrame(
+        data=[
+            [1, "foo", 1.01],
+            [2, "bar", 2.02],
+            [3, "baz", 3.03],
+        ],
+        columns=["id", "text_col", "float_col"]
+    )
+    dbu.write_df_to_db(
+        df=test_df,
+        db_connection=db_transact,
+        tablename='test_table',
+        schemaname='public'
+    )
+    db_results = pd.read_sql(
+        sql="SELECT * from public.test_table",
+        con=db_transact
+    )
+    npt.assert_array_equal(
+        db_results,
+        pd.DataFrame(
+            data=[
+                [1, "foo", 1.01, None],
+                [2, "bar", 2.02, None],
+                [3, "baz", 3.03, None],
+            ],
+            columns=["id", "text_col", "float_col", "bool_col"]
+        )
+    )
+    npt.assert_array_equal(
+        db_results.columns,
+        ["id", "text_col", "float_col", "bool_col"]
+    )
+
+
+def test_write_df_to_db_db_missing_columns(db_transact):
+    table_create_query = """
+        CREATE TABLE public.test_table (
+        id INT UNIQUE,
+        text_col TEXT,
+        float_col NUMERIC NOT NULL
+        )
+    """
+    db_transact.execute(table_create_query)
+    test_df = pd.DataFrame(
+        data=[
+            [1, "foo", 1.01, True],
+            [2, "bar", 2.02, False],
+            [3, "baz", 3.03, True],
+        ],
+        columns=["id", "text_col", "float_col", "bool_col"]
+    )
+    with pytest.raises(Exception) as excinfo:
+        dbu.write_df_to_db(
+            df=test_df,
+            db_connection=db_transact,
+            tablename='test_table',
+            schemaname='public'
+        )
+    assert str(excinfo.value) == \
+        "Unexpected column names could not map to DB columns:\n\tbool_col"
+
+
+def test_write_df_to_db_db_missing_empty_columns(db_transact):
+    table_create_query = """
+        CREATE TABLE public.test_table (
+        id INT UNIQUE,
+        text_col TEXT,
+        float_col NUMERIC NOT NULL
+        )
+    """
+    db_transact.execute(table_create_query)
+    test_df = pd.DataFrame(
+        data=[
+            [1, "foo", 1.01, None],
+            [2, "bar", 2.02, None],
+            [3, "baz", 3.03, None],
+        ],
+        columns=["id", "text_col", "float_col", "bool_col"]
+    )
+    with pytest.raises(Exception) as excinfo:
+        dbu.write_df_to_db(
+            df=test_df,
+            db_connection=db_transact,
+            tablename='test_table',
+            schemaname='public'
+        )
+    assert str(excinfo.value) == \
+        "Unexpected column names could not map to DB columns:\n\tbool_col"
+
+
+def test_write_df_to_db_wrong_types(db_transact):
+    table_create_query = """
+        CREATE TABLE public.test_table (
+        id INT UNIQUE,
+        text_col TEXT,
+        float_col NUMERIC NOT NULL
+        )
+    """
+    db_transact.execute(table_create_query)
+    test_df = pd.DataFrame(
+        data=[
+            [1, 1.01, "foo"],
+            [2, "bar", 2.02],
+            [3, "baz", 3.03],
+        ],
+        columns=["id", "text_col", "float_col"]
+    )
+    with pytest.raises(Exception) as excinfo:
+        dbu.write_df_to_db(
+            df=test_df,
+            db_connection=db_transact,
+            tablename='test_table',
+            schemaname='public'
+        )
+    assert 'invalid input syntax for type numeric: "foo"' in str(excinfo.value)
+
+
+def test_write_df_to_db_df_offset_columns(db_transact):
+    table_create_query = """
+        CREATE TABLE public.test_table (
+        id INT UNIQUE,
+        text_col TEXT,
+        float_col NUMERIC NOT NULL,
+        bool_col BOOLEAN
+        )
+    """
+    db_transact.execute(table_create_query)
+    test_df = pd.DataFrame(
+        data=[
+            [1, "foo", 1.01],
+            [2, "bar", 2.02],
+        ],
+        columns=["id", "text_col", "float_col"]
+    )
+    dbu.write_df_to_db(
+        df=test_df,
+        db_connection=db_transact,
+        tablename='test_table',
+        schemaname='public'
+    )
+    test_df = pd.DataFrame(
+        data=[
+            [3, False, 3.03],
+            [4, True, 4.04],
+        ],
+        columns=["id", "bool_col", "float_col"]
+    )
+    dbu.write_df_to_db(
+        df=test_df,
+        db_connection=db_transact,
+        tablename='test_table',
+        schemaname='public'
+    )
+    db_results = pd.read_sql(
+        sql="SELECT * from public.test_table",
+        con=db_transact
+    )
+    npt.assert_array_equal(
+        db_results,
+        pd.DataFrame(
+            data=[
+                [1, "foo", 1.01, None],
+                [2, "bar", 2.02, None],
+                [3, None, 3.03, False],
+                [4, None, 4.04, True],
+            ],
+            columns=["id", "text_col", "float_col", "bool_col"]
+        )
+    )
+    npt.assert_array_equal(
+        db_results.columns,
+        ["id", "text_col", "float_col", "bool_col"]
+    )
+
+
