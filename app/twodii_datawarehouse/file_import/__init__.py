@@ -3,7 +3,7 @@ import logging
 import pathlib
 import re
 
-import twodii_datawarehouse.file_import.utils as utils
+import twodii_datawarehouse.file_import.db_utils as dbu
 import twodii_datawarehouse.file_import.globaldata as gd
 
 
@@ -31,7 +31,7 @@ def import_single_file(
     data_files_path=pathlib.PurePosixPath('/')
         ):
     """Orchestrate reading and import a file."""
-    if utils.check_if_file_imported(filepath, db_engine):
+    if dbu.check_if_file_imported(filepath, db_engine):
         logging.info(
             f"Already imported: {filepath.relative_to(data_files_path)}"
         )
@@ -42,7 +42,7 @@ def import_single_file(
     schemaname = 'rawdata'
 
     with db_engine.begin() as db_con:
-        columns_info = utils.get_db_column_info(
+        columns_info = dbu.get_db_column_info(
             db_connection=db_con,
             tablename=file_info['tablename'],
             schemaname=schemaname
@@ -53,13 +53,13 @@ def import_single_file(
     # Using the context manager allows the adding to import history and writing
     # to DB to be in the same transaction, and it will rollback if it fails.
     with db_engine.begin() as db_con:
-        import_id = utils.add_to_import_history(
+        import_id = dbu.add_to_import_history(
             filepath=filepath,
             db_connection=db_con,
             filetype=file_info['filetype']
         )
         df['import_history_id'] = import_id
-        utils.write_df_to_db(
+        dbu.write_df_to_db(
             df=df,
             db_connection=db_con,
             tablename=file_info['tablename'],

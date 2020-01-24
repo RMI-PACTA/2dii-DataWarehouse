@@ -1,5 +1,0 @@
----
-version: "3.7"
-services:
-  app:
-    command: ["wait-for.sh", "db:5432", "--", "pytest", "/usr/src/test/pytest"]
