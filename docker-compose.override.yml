@@ -1,0 +1,36 @@
+---
+version: "3.7"
+services:
+  app:
+    command: ["wait-for.sh", "db:5432", "--", "bash"]
+    depends_on:
+      - db
+    stdin_open: true
+    tty: true
+    networks:
+      - devnet
+    volumes:
+      - "${PWD}/test/data_files/:/tmp/data_files"
+      - "${PWD}/app/:/usr/src/app/"
+      - "${PWD}/sql:/usr/src/sql"
+      - "${PWD}/scripts:/usr/src/scripts"
+      - "${PWD}/test:/usr/src/test"
+
+  db:
+    environment:
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD:-postgres}"
+      POSTGRES_USER: "${POSTGRES_USER:-postgres}"
+      POSTGRES_DB: "${POSTGRES_DB:-twodii}"
+    image: "postgres:11.5-alpine"
+    ports:
+      - "${POSTGRES_EXPOSE_PORT:-5432}:5432"
+    networks:
+      - devnet
+    volumes:
+      - "pgdata:/var/lib/postgresql/data"
+
+networks:
+  devnet:
+
+volumes:
+  pgdata:

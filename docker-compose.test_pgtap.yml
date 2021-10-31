@@ -1,0 +1,47 @@
+---
+version: "3.7"
+services:
+  app:
+    command: [
+      "wait-for.sh", "test_db_pgtap:5432", "--",
+      "bash", "-c", "python twodii_datawarehouse.py -v --migrations-only"
+    ]
+    depends_on:
+      - test_db_pgtap
+    environment:
+      POSTGRES_HOST: "${POSTGRES_HOST:-test_db_pgtap}"
+    networks:
+      - testnet
+
+  test_db_pgtap:
+    environment:
+      POSTGRES_DB: "${POSTGRES_DB:-twodii}"
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD:-postgres}"
+      POSTGRES_USER: "${POSTGRES_USER:-postgres}"
+    image: "postgres:11.5-alpine"
+    networks:
+      - testnet
+    volumes:
+      - "test-pgtap:/var/lib/postgresql/data"
+
+  db_check:
+    image: hbpmip/pgtap:latest
+    restart: unless-stopped
+    depends_on:
+      - test_db_pgtap
+    environment:
+      HOST: test_db_pgtap
+      TESTS: --recurse /test/ --ext .sql --failures --nocolor
+      DATABASE: "${POSTGRES_DB:-twodii}"
+      PASSWORD: "${POSTGRES_PASSWORD:-postgres}"
+      USER: "${POSTGRES_USER:-postgres}"
+    networks:
+      - testnet
+    volumes:
+      - ./test/pgtap/:/test/
+
+networks:
+  testnet:
+
+volumes:
+  test-pgtap:

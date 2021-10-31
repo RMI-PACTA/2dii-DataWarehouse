@@ -1,0 +1,15 @@
+---
+name: pgTAP Unit Tests
+# Run pgTAP unit tests, using the process defined in the Makefile.
+# See /Makefile and /test/pgtap/README.md for more information.
+"on": push
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v1
+      - name: Run pgTAP tests
+        run: make test_pgtap.log

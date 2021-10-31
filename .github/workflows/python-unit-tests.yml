@@ -1,0 +1,15 @@
+---
+name: Python Unit Tests
+# Run python unit tests, using `pytest` inside a docker container
+# See /test/pytest/README.md for details on the python unit testing process.
+"on": push
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v1
+      - name: Run unit tests
+        run: make test_python_unit_test.log
