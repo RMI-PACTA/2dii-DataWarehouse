@@ -1,3 +1,5 @@
+**[Deprecated] Note this repo is no longer maintained, and is archived for historical context only.**
+
 # Data Warehouse for 2 Degrees Investing
 
 This repository is the home for code related to the 2 Degrees Investing Data Warehouse (DW).
